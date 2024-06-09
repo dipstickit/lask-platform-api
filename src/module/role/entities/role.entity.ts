@@ -15,7 +15,7 @@ export class Role {
   id: number;
 
   @Column()
-  role_name: string;
+  roleName: string;
 
   @Column()
   description: string;

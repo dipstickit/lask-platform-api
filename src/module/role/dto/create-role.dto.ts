@@ -8,13 +8,12 @@ export class CreateRoleDto {
         default: null,
         type: String,
     })
-    name: string;
+    roleName: string;
 
     @IsOptional()
     @ApiProperty({
         example: 'Role of a User',
         default: null,
     })
-    @Length(5, undefined)
     description: string;
 }

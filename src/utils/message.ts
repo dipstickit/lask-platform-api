@@ -16,4 +16,13 @@ export const CREATE_USER = 'Create user successfully';
 export const UPDATE_USER = 'Update user successfully';
 export const DELETE_USER = 'Delete user successfully';
 
-
+export const ROLE_LOAD_SUCCESS = 'Role loaded successfully';
+export const ROLE_UPDATE_SUCCESS = 'Role updated successfully';
+export const ROLE_DELETE_SUCCESS = 'Role deleted successfully';
+export const ROLE_CREATE_SUCCESS = 'Role deleted successfully';
+export const FAIL_CREATE_ROLE = 'Role can not be created';
+export const FAIL_UPDATE_ROLE = 'Role can not be updated';
+export const FAIL_DELETE_ROLE = 'Role can not be deleted';
+export const FAIL_LOAD_ROLE = 'Role can not be loaded';
+export const DUPLICATED_ROLE = 'Role already existed';
+export const NOTFOUND_ROLE = 'Role with ID not found';
