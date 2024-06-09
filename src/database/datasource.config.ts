@@ -13,9 +13,6 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     database: configService.get('DB_DATABASE'),
     entities: [join(__dirname, '../**/*.entity{.ts,.js}')],
     migrations: [join(__dirname, '../*migrations/*{.ts,.js}')],
-    cli: {
-      migrationsDir: 'src/database/migrations',
-    },
     autoLoadEntities: true,
     logging: true,
     synchronize: configService.get<boolean>('DB_SYNC'),
