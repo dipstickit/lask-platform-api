@@ -7,28 +7,26 @@ import {
     MaxLength,
     MinLength,
     IsNumber,
-    IsEnum,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { INVALID_EMAIL, INVALID_PASSWORD } from 'src/utils/message';
-import { Role } from '../enum/role.enum';
 
 const passwordFormat =
     /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
 
 export class CreateUserDto {
     @IsNotEmpty()
-    firstname: string;
+    firstName: string;
 
     @IsNotEmpty()
-    lastname: string;
+    lastName: string;
 
     @IsEmail({}, { message: INVALID_EMAIL })
     @IsNotEmpty()
     email: string;
 
     @IsNotEmpty()
-    @MinLength(8)
+    @MinLength(5)
     @MaxLength(20)
     @Matches(passwordFormat, {
         message: INVALID_PASSWORD,
@@ -42,6 +40,9 @@ export class CreateUserDto {
     phone?: string;
 
     @IsOptional()
+    userImg?: string;
+
+    @IsOptional()
     @IsDateString()
     dob?: string;
 
@@ -52,6 +53,6 @@ export class CreateUserDto {
         else return '';
     })
 
-    @IsEnum(Role)
-    roleId: Role;
+    @IsNumber()
+    roleId?: number;
 }

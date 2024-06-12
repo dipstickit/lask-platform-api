@@ -6,11 +6,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-
 } from 'typeorm';
 
 @Entity()
 export class Role {
+
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -20,8 +20,8 @@ export class Role {
   @Column()
   description: string;
 
-  @OneToMany((type) => User, (user) => user.role)
-  user: User;
+  @OneToMany(() => User, (user) => user.role)
+  user: User[];
 
   @Column({ default: true })
   isActive: boolean;
@@ -29,6 +29,6 @@ export class Role {
   @CreateDateColumn({ type: 'timestamp', name: 'created_at', select: false })
   createdAt: Date;
 
-  @UpdateDateColumn({type: 'timestamp', name: 'updated_at' ,select: false })
+  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at', select: false })
   updatedAt: Date;
 }

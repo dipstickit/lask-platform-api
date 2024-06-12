@@ -26,7 +26,7 @@ export class RoleController {
   @Get(':id')
   @ResponseMessage(ROLE_LOAD_SUCCESS)
   findOne(@Param('id') id: string) {
-    return this.roleService.findOne(+id);
+    return this.roleService.findOneById(+id);
   }
 
   @Get('name/:name')

@@ -38,7 +38,7 @@ export class RoleService {
   }
 
 
-  async findOne(id: number): Promise<Role> {
+  async findOneById(id: number): Promise<Role> {
     const role = await this.roleRepository.findOne({ where: { id } });
     if (!role) {
       throw new BadRequestException(NOTFOUND_ROLE)
@@ -47,7 +47,10 @@ export class RoleService {
   }
 
   async findOneByName(name: string): Promise<Role> {
-    const role = await this.roleRepository.createQueryBuilder('role').where('role.roleName = :name', { name }).getOne();
+    const role = await this.roleRepository
+    .createQueryBuilder('role')
+    .where('role.roleName = :name', { name })
+    .getOne();
     if (!role) {
       throw new BadRequestException(FAIL_LOAD_ROLE)
     }
