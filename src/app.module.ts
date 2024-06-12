@@ -13,6 +13,7 @@ import { ProductsPhotoModule } from './module/catalog/products/products-photo/pr
 import { ProductRatingsModule } from './module/catalog/product-ratings/product-ratings.module';
 import { LocalFilesModule } from './module/local-files/local-files.module';
 import { ProductsModule } from './module/catalog/products/products.module';
+import { CatalogModule } from './module/catalog/catalog.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -25,10 +26,11 @@ import { ProductsModule } from './module/catalog/products/products.module';
     UsersModule,
     RoleModule,
     CategoriesModule,
+    CatalogModule,
     ProductsModule,
     ProductsPhotoModule,
     ProductRatingsModule,
-    LocalFilesModule
+    LocalFilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
