@@ -16,7 +16,7 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     autoLoadEntities: true,
     logging: true,
     synchronize: configService.get<boolean>('DB_SYNC'),
-
+    seeds: [join(__dirname, '../database/seeds/index.ts}')],
   }),
   inject: [ConfigService],
 };
