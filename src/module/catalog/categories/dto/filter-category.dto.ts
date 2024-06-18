@@ -18,12 +18,6 @@ export class CategoryFilterDto {
   @Type(() => Number)
   @IsNumber()
   @Transform(({ value }) => (value ? Number(value) : undefined))
-  parentCategoryId?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Transform(({ value }) => (value ? Number(value) : undefined))
   current?: number;
 
   @IsOptional()

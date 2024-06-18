@@ -14,6 +14,7 @@ import { ProductRatingsModule } from './module/catalog/product-ratings/product-r
 import { LocalFilesModule } from './module/local-files/local-files.module';
 import { ProductsModule } from './module/catalog/products/products.module';
 import { CatalogModule } from './module/catalog/catalog.module';
+import { SettingsModule } from './module/settings/settings.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -31,6 +32,7 @@ import { CatalogModule } from './module/catalog/catalog.module';
     ProductsPhotoModule,
     ProductRatingsModule,
     LocalFilesModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

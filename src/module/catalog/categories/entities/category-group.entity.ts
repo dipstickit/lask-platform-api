@@ -1,15 +1,24 @@
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Category } from './category.entity';
 
 @Entity('category_groups')
 export class CategoryGroup {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('increment')
   id: number;
 
   @Column()
   name: string;
 
-  @ManyToMany(() => Category, (category) => category.groups, {
+  @Column()
+  slug?: string;
+
+  @OneToMany(() => Category, (category) => category.groups, {
     orphanedRowAction: 'delete',
   })
   categories: Category[];

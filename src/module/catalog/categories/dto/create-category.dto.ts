@@ -12,7 +12,7 @@ export class CreateCategoryDto {
   @IsOptional()
   slug?: string;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  parentCategoryId?: number;
+  categoryGroupName?: string;
 }

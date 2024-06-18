@@ -29,3 +29,18 @@ export const FAIL_DELETE_ROLE = 'Role can not be deleted';
 export const FAIL_LOAD_ROLE = 'Role can not be loaded';
 export const DUPLICATED_ROLE = 'Role already existed';
 export const NOTFOUND_ROLE = 'Role not found';
+
+export const NOTFOUND_CATEGORY = 'category not found';
+export const GET_CATEGORY_DETAIL_SUCCESS = 'Get category detail successfully';
+export const GET_CATEGORY_SUCCESS    = 'Get category list successfully';
+export const CREATE_CATEGORY_SUCCESS = 'Create category successfully';
+export const UPDATE_CATEGORY_SUCCESS = 'Update category successfully';
+export const DELETE_CATEGORY_SUCCESS = 'Delete category successfully';
+export const DUPLICATED_CATEGORY_NAME = 'CategoryName already exists';
+export const DUPLICATED_CATEGORY_SLUG = 'Slug already exists';
+
+export const NOTFOUND_CATEGORY_GROUP = 'CategoryGroup not found';
+export const FAIL_LOAD_CATEGORY_GROUP = 'CategoryGroup can not be loaded';
+export const GET_CATEGORY_GROUP_SUCCESS    = 'Get category list successfully';
+export const CREATE_CATEGORY_GROUP_SUCCESS = 'Create category successfully';
+export const GET_CATEGORY_GROUP_DETAIL_SUCCESS = 'Get category detail successfully';
