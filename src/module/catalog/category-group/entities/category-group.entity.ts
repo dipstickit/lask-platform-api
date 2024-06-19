@@ -5,7 +5,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Category } from './category.entity';
+import { Category } from '../categories/entities/category.entity';
 
 @Entity('category_groups')
 export class CategoryGroup {

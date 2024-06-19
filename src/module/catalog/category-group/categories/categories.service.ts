@@ -4,9 +4,9 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
-import { CategoryGroup } from './entities/category-group.entity';
+import { CategoryGroup } from '../entities/category-group.entity';
 import { CategoryFilterDto } from './dto/filter-category.dto';
-import { CreateCategoryGroupDto } from './dto/create-category-group.dto';
+import { CreateCategoryGroupDto } from '../dto/create-category-group.dto';
 import {
   DUPLICATED_CATEGORY_NAME,
   DUPLICATED_CATEGORY_SLUG,
@@ -23,7 +23,7 @@ export class CategoriesService {
     private categoryGroupRepository: Repository<CategoryGroup>,
   ) {}
 
-  async findOneCategoryById(id: number, products = false) {
+  async findOneCategoryById(id: number) {
     const category = await this.categoryRepository.findOne({
       where: { id },
       relations: ['groups', 'products'],
@@ -155,45 +155,5 @@ export class CategoriesService {
       totalItems,
       items: result,
     };
-  }
-
-  async createCategoryGroup(createCategoryGroupDto: CreateCategoryGroupDto) {
-    const { name, slug } = createCategoryGroupDto;
-    const existingGroupByName = await this.categoryGroupRepository.findOne({
-      where: { name },
-    });
-    if (existingGroupByName) {
-      throw new BadRequestException(DUPLICATED_CATEGORY_NAME);
-    }
-    const existingGroupBySlug = await this.categoryGroupRepository.findOne({
-      where: { slug },
-    });
-    if (existingGroupBySlug) {
-      throw new BadRequestException(DUPLICATED_CATEGORY_SLUG);
-    }
-    const categoryGroup = this.categoryGroupRepository.create(
-      createCategoryGroupDto,
-    );
-    return this.categoryGroupRepository.save(categoryGroup);
-  }
-
-  async findAllCategoryGroups() {
-    try {
-      return this.categoryGroupRepository.find({
-        order: { id: 'ASC' },
-        relations: ['categories'],
-      });
-    } catch (error) {
-      throw new BadRequestException(FAIL_LOAD_CATEGORY_GROUP);
-    }
-  }
-
-  async findOneCategoryGroupById(id: number) {
-    const categoryGroup = await this.categoryGroupRepository.findOne({
-      where: { id },
-      relations: ['categories'],
-    });
-    if (!categoryGroup) throw new BadRequestException(NOTFOUND_CATEGORY);
-    return categoryGroup;
   }
 }

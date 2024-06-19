@@ -5,8 +5,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Product } from '../../products/entities/product.entity';
-import { CategoryGroup } from './category-group.entity';
+import { CategoryGroup } from '../../entities/category-group.entity';
+import { Product } from 'src/module/catalog/products/entities/product.entity';
 
 @Entity('categories')
 export class Category {
@@ -30,5 +30,4 @@ export class Category {
 
   @OneToMany(() => Product, (product) => product.category)
   products: Product[];
-  category: CategoryGroup[];
 }

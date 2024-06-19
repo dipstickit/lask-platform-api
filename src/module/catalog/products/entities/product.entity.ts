@@ -10,7 +10,7 @@ import {
 import { Attribute } from './attribute.entity';
 import { ProductPhoto } from '../products-photo/entities/products-photo.entity';
 import { ProductRating } from '../../product-ratings/entities/product-rating.entity';
-import { Category } from '../../categories/entities/category.entity';
+import { Category } from '../../category-group/categories/entities/category.entity';
 
 @Entity('products')
 export class Product {

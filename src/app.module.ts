@@ -8,21 +8,23 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './module/users/users.module';
 import { RoleModule } from './module/role/role.module';
-import { CategoriesModule } from './module/catalog/categories/categories.module';
 import { ProductsPhotoModule } from './module/catalog/products/products-photo/products-photo.module';
 import { ProductRatingsModule } from './module/catalog/product-ratings/product-ratings.module';
 import { LocalFilesModule } from './module/local-files/local-files.module';
 import { ProductsModule } from './module/catalog/products/products.module';
 import { CatalogModule } from './module/catalog/catalog.module';
 import { SettingsModule } from './module/settings/settings.module';
+import { CategoryGroupModule } from './module/catalog/category-group/category-group.module';
+import { CategoriesModule } from './module/catalog/category-group/categories/categories.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({
-    isGlobal: true,
-    envFilePath: '.local.env',
-  }),
-  TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
-  ScheduleModule.forRoot(),
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.local.env',
+    }),
+    TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     RoleModule,
@@ -33,8 +35,9 @@ import { SettingsModule } from './module/settings/settings.module';
     ProductRatingsModule,
     LocalFilesModule,
     SettingsModule,
+    CategoryGroupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

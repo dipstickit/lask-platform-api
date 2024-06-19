@@ -11,8 +11,7 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { CategoryGroup } from './entities/category-group.entity';
-import { CreateCategoryGroupDto } from './dto/create-category-group.dto';
+import { CreateCategoryGroupDto } from '../dto/create-category-group.dto';
 import { ResponseMessage } from 'src/decorator/customize';
 import {
   CREATE_CATEGORY_GROUP_SUCCESS,
@@ -61,23 +60,5 @@ export class CategoriesController {
   @ResponseMessage(DELETE_CATEGORY_SUCCESS)
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(+id);
-  }
-
-  @Get('groups')
-  @ResponseMessage(GET_CATEGORY_GROUP_SUCCESS)
-  async findAllCategoryGroups() {
-    return await this.categoriesService.findAllCategoryGroups();
-  }
-
-  @Post('groups')
-  @ResponseMessage(CREATE_CATEGORY_GROUP_SUCCESS)
-  createCategoryGroup(@Body() createCategoryGroupDto: CreateCategoryGroupDto) {
-    return this.categoriesService.createCategoryGroup(createCategoryGroupDto);
-  }
-
-  @Get('groups/:id')
-  @ResponseMessage(GET_CATEGORY_GROUP_DETAIL_SUCCESS)
-  findOneCategoryGroupById(@Param('id') id: string) {
-    return this.categoriesService.findOneCategoryGroupById(+id);
   }
 }
