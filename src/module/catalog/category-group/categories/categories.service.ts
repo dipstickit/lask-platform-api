@@ -4,23 +4,20 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
-import { CategoryGroup } from '../entities/category-group.entity';
 import { CategoryFilterDto } from './dto/filter-category.dto';
-import { CreateCategoryGroupDto } from '../dto/create-category-group.dto';
 import {
   DUPLICATED_CATEGORY_NAME,
   DUPLICATED_CATEGORY_SLUG,
-  FAIL_LOAD_CATEGORY_GROUP,
   NOTFOUND_CATEGORY,
 } from 'src/utils/message';
+import { CategoryGroupService } from '../category-group.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-    @InjectRepository(CategoryGroup)
-    private categoryGroupRepository: Repository<CategoryGroup>,
+    private readonly categoryGroupService: CategoryGroupService,
   ) {}
 
   async findOneCategoryById(id: number) {
@@ -34,69 +31,94 @@ export class CategoriesService {
     return category;
   }
 
-  async createCategory(createCategoryDto: CreateCategoryDto) {
-    const { name, slug } = createCategoryDto;
+  async createCategory(
+    createCategoryDto: CreateCategoryDto | CreateCategoryDto[],
+  ) {
+    const isBulkOperation = Array.isArray(createCategoryDto);
+    const dtos = isBulkOperation ? createCategoryDto : [createCategoryDto];
 
-    const [existingName, existingSlug] = await Promise.all([
-      this.categoryRepository.findOne({ where: { name } }),
-      this.categoryRepository.findOne({ where: { slug } }),
-    ]);
+    const categoriesToCreate = [];
 
-    if (existingName) {
-      throw new BadRequestException(DUPLICATED_CATEGORY_NAME);
+    for (const dto of dtos) {
+      const { name, slug, categoryGroupId } = dto;
+
+      const existingName = await this.categoryRepository.findOneBy({ name });
+      const existingSlug = await this.categoryRepository.findOneBy({ slug });
+
+      if (existingName) {
+        throw new BadRequestException(DUPLICATED_CATEGORY_NAME);
+      }
+      if (existingSlug) {
+        throw new BadRequestException(DUPLICATED_CATEGORY_SLUG);
+      }
+
+      const categoryGroup =
+        await this.categoryGroupService.findOneById(categoryGroupId);
+      if (!categoryGroup) {
+        throw new BadRequestException(
+          `Category group with ID ${categoryGroupId} not found`,
+        );
+      }
+
+      const category = this.categoryRepository.create({
+        ...dto,
+        categoryGroup,
+      });
+
+      categoriesToCreate.push(category);
     }
-    if (existingSlug) {
-      throw new BadRequestException(DUPLICATED_CATEGORY_SLUG);
-    }
-    const category = this.categoryRepository.create(createCategoryDto);
-    Object.assign(category, createCategoryDto);
-    return await this.categoryRepository.save(category);
+
+    const result = isBulkOperation
+      ? await this.categoryRepository.save(categoriesToCreate)
+      : await this.categoryRepository.save(categoriesToCreate[0]);
+
+    return result;
   }
 
-  async updateCategoryById(id: number, updateCategoryDto: UpdateCategoryDto) {
-    const { name, slug, groups, ...rest } = updateCategoryDto;
+  // async updateCategoryById(id: number, updateCategoryDto: UpdateCategoryDto) {
+  //   const { name, slug, groups, ...rest } = updateCategoryDto;
 
-    const category = await this.categoryRepository.findOne({
-      where: { id },
-      relations: ['groups'],
-    });
-    if (!category) {
-      throw new BadRequestException(NOTFOUND_CATEGORY);
-    }
+  //   const category = await this.categoryRepository.findOne({
+  //     where: { id },
+  //     relations: ['groups'],
+  //   });
+  //   if (!category) {
+  //     throw new BadRequestException(NOTFOUND_CATEGORY);
+  //   }
 
-    const [existingName, existingSlug] = await Promise.all([
-      name && name !== category.name
-        ? this.categoryRepository.findOne({ where: { name } })
-        : null,
-      slug && slug !== category.slug
-        ? this.categoryRepository.findOne({ where: { slug } })
-        : null,
-    ]);
+  //   const [existingName, existingSlug] = await Promise.all([
+  //     name && name !== category.name
+  //       ? this.categoryRepository.findOne({ where: { name } })
+  //       : null,
+  //     slug && slug !== category.slug
+  //       ? this.categoryRepository.findOne({ where: { slug } })
+  //       : null,
+  //   ]);
 
-    if (existingName) throw new BadRequestException(DUPLICATED_CATEGORY_NAME);
-    if (existingSlug) throw new BadRequestException(DUPLICATED_CATEGORY_SLUG);
+  //   if (existingName) throw new BadRequestException(DUPLICATED_CATEGORY_NAME);
+  //   if (existingSlug) throw new BadRequestException(DUPLICATED_CATEGORY_SLUG);
 
-    Object.assign(category, rest);
-    if (name) category.name = name;
-    if (slug) category.slug = slug;
+  //   const updateData: Partial<Category> = { ...rest };
+  //   if (name) category.name = name;
+  //   if (slug) category.slug = slug;
 
-    if (groups && groups.length > 0) {
-      const updatedGroups = await Promise.all(
-        groups.map(async (groupData) => {
-          let group = await this.categoryGroupRepository.findOne({
-            where: { name: groupData.name },
-          });
-          if (!group) {
-            group = this.categoryGroupRepository.create(groupData);
-            group = await this.categoryGroupRepository.save(group);
-          }
-          return group;
-        }),
-      );
-      category.groups = updatedGroups[0];
-    }
-    return this.categoryRepository.update(id, category);
-  }
+  //   if (groups && groups.length > 0) {
+  //     const updatedGroups = await Promise.all(
+  //       groups.map(async (groupData) => {
+  //         let group = await this.categoryGroupRepository.findOne({
+  //           where: { name: groupData.name },
+  //         });
+  //         if (!group) {
+  //           group = this.categoryGroupRepository.create(groupData);
+  //           group = await this.categoryGroupRepository.save(group);
+  //         }
+  //         return group;
+  //       }),
+  //     );
+  //     updateData.groups = updatedGroups[groups.length - 1];
+  //   }
+  //   return await this.categoryRepository.save(category);
+  // }
 
   async remove(id: number): Promise<void> {
     const existCategory = await this.categoryRepository.findOne({

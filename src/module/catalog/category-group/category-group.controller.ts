@@ -39,6 +39,6 @@ export class CategoryGroupController {
   @Get(':id')
   @ResponseMessage(GET_CATEGORY_GROUP_DETAIL_SUCCESS)
   findOneCategoryGroupById(@Param('id') id: string) {
-    return this.categoryGroupService.findOneCategoryGroupById(+id);
+    return this.categoryGroupService.findOneById(+id);
   }
 }

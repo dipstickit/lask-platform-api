@@ -18,8 +18,8 @@ export class CategoryGroup {
   @Column()
   slug?: string;
 
-  @OneToMany(() => Category, (category) => category.groups, {
+  @OneToMany(() => Category, (category) => category.categoryGroup, {
     orphanedRowAction: 'delete',
   })
-  categories: Category[];
+  category: Category[];
 }

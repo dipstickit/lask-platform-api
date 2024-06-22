@@ -41,17 +41,17 @@ export class CategoryGroupService {
     try {
       return this.categoryGroupRepository.find({
         order: { id: 'ASC' },
-        relations: ['categories'],
+        relations: ['category'],
       });
     } catch (error) {
       throw new BadRequestException(FAIL_LOAD_CATEGORY_GROUP);
     }
   }
 
-  async findOneCategoryGroupById(id: number) {
+  async findOneById(id: number) {
     const categoryGroup = await this.categoryGroupRepository.findOne({
       where: { id },
-      relations: ['categories'],
+      relations: ['category'],
     });
     if (!categoryGroup) throw new BadRequestException(NOTFOUND_CATEGORY);
     return categoryGroup;

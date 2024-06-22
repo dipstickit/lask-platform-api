@@ -22,11 +22,10 @@ export class Category {
   @Column({ nullable: true })
   slug?: string;
 
-  @ManyToOne(() => CategoryGroup, (categoryGroup) => categoryGroup.categories, {
+  @ManyToOne(() => CategoryGroup, (categoryGroup) => categoryGroup.category, {
     eager: true,
-    onDelete: 'CASCADE',
   })
-  groups: CategoryGroup;
+  categoryGroup: CategoryGroup;
 
   @OneToMany(() => Product, (product) => product.category)
   products: Product[];

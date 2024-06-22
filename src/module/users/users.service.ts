@@ -22,7 +22,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly roleService: RoleService,
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const { email, roleId, password } = createUserDto;

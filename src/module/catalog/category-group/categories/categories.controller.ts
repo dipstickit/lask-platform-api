@@ -47,14 +47,14 @@ export class CategoriesController {
     return this.categoriesService.findOneCategoryById(+id);
   }
 
-  @Put(':id')
-  @ResponseMessage(UPDATE_CATEGORY_SUCCESS)
-  update(
-    @Param('id') id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-  ) {
-    return this.categoriesService.updateCategoryById(+id, updateCategoryDto);
-  }
+  // @Put(':id')
+  // @ResponseMessage(UPDATE_CATEGORY_SUCCESS)
+  // update(
+  //   @Param('id') id: string,
+  //   @Body() updateCategoryDto: UpdateCategoryDto,
+  // ) {
+  //   return this.categoriesService.updateCategoryById(+id, updateCategoryDto);
+  // }
 
   @Delete(':id')
   @ResponseMessage(DELETE_CATEGORY_SUCCESS)
