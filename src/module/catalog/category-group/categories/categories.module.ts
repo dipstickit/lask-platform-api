@@ -7,7 +7,10 @@ import { CategoryGroup } from '../entities/category-group.entity';
 import { CategoryGroupModule } from '../category-group.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Category]), CategoryGroupModule],
+  imports: [
+    TypeOrmModule.forFeature([Category, CategoryGroup]),
+    CategoryGroupModule,
+  ],
   controllers: [CategoriesController],
   providers: [CategoriesService],
 })

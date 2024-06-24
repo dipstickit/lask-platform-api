@@ -17,13 +17,11 @@ export class CategoryFilterDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Transform(({ value }) => (value ? Number(value) : undefined))
   current?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Transform(({ value }) => (value ? Number(value) : undefined))
   pageSize?: number;
 
   @IsOptional()

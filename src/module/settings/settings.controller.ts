@@ -1,34 +1,54 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Put,
+  Post,
+} from '@nestjs/common';
 import { SettingsService } from './settings.service';
+import { Setting } from './models/setting.entity';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 
+@ApiTags('settings')
 @Controller('settings')
 export class SettingsController {
-  constructor(private readonly settingsService: SettingsService) {}
-
-  @Post()
-  create(@Body() createSettingDto: CreateSettingDto) {
-    return this.settingsService.create(createSettingDto);
-  }
+  constructor(private settingsService: SettingsService) {}
 
   @Get()
-  findAll() {
-    return this.settingsService.findAll();
+  async getSettings(): Promise<Setting[]> {
+    return this.settingsService.getSettings();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.settingsService.findOne(+id);
+  @Get('/:id(\\d+)')
+  async getSetting(@Param('id', ParseIntPipe) id: number): Promise<Setting> {
+    return this.settingsService.getSetting(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSettingDto: UpdateSettingDto) {
-    return this.settingsService.update(+id, updateSettingDto);
+  @Get('/:name/value')
+  async getSettingValueByName(@Param('name') name: string): Promise<string> {
+    return this.settingsService.getSettingValueByName(name);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.settingsService.remove(+id);
+  @Post()
+  async createSetting(@Body() data: CreateSettingDto): Promise<Setting> {
+    return this.settingsService.createSetting(data);
+  }
+
+  @Put('/:id')
+  async updateSetting(
+    @Param('id') id: number,
+    @Body() data: UpdateSettingDto,
+  ): Promise<Setting> {
+    return this.settingsService.updateSetting(id, data);
+  }
+
+  @Delete('/:id')
+  async deleteSetting(@Param('id') id: number): Promise<void> {
+    await this.settingsService.deleteSetting(id);
   }
 }
