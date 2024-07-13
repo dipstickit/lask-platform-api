@@ -16,6 +16,10 @@ import { CatalogModule } from './module/catalog/catalog.module';
 import { SettingsModule } from './module/settings/settings.module';
 import { CategoryGroupModule } from './module/catalog/category-group/category-group.module';
 import { CategoriesModule } from './module/catalog/category-group/categories/categories.module';
+import { ImportExportModule } from './module/import-export/import-export.module';
+import { PagesModule } from './module/pages/pages.module';
+import { WishlistsModule } from './module/wishlists/wishlists.module';
+import { SalesModule } from './module/sales/sales.module';
 
 @Module({
   imports: [
@@ -36,6 +40,10 @@ import { CategoriesModule } from './module/catalog/category-group/categories/cat
     LocalFilesModule,
     SettingsModule,
     CategoryGroupModule,
+    ImportExportModule,
+    PagesModule,
+    WishlistsModule,
+    SalesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

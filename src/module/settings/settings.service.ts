@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
-import { Setting } from './models/setting.entity';
+import { Setting } from './entities/setting.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SettingType } from './models/setting-type.enum';
 import validator from 'validator';

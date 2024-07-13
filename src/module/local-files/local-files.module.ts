@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { LocalFilesService } from './local-files.service';
-import { LocalFilesController } from './local-files.controller';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  controllers: [LocalFilesController],
+  imports: [SettingsModule],
   providers: [LocalFilesService],
+  exports: [LocalFilesService],
 })
 export class LocalFilesModule {}

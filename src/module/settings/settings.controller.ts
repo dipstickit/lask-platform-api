@@ -9,10 +9,10 @@ import {
   Post,
 } from '@nestjs/common';
 import { SettingsService } from './settings.service';
-import { Setting } from './models/setting.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
+import { Setting } from './entities/setting.entity';
 
 @ApiTags('settings')
 @Controller('settings')

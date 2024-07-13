@@ -6,7 +6,7 @@ import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class LocalFilesService {
-  constructor(private settingsService: SettingsService) {}
+  constructor(private readonly settingsService: SettingsService) {}
 
   async getPhoto(filepath: string, mimeType: string) {
     const stream = createReadStream(path.join(process.cwd(), filepath));

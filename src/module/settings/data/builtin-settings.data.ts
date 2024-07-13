@@ -1,5 +1,5 @@
-import { CreateSettingDto } from './dto/create-setting.dto';
-import { SettingType } from './models/setting-type.enum';
+import { CreateSettingDto } from '../dto/create-setting.dto';
+import { SettingType } from '../models/setting-type.enum';
 
 export const BUILTIN_SETTINGS: CreateSettingDto[] = [
   {
