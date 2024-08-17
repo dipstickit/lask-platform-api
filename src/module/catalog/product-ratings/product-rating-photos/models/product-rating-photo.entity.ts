@@ -1,6 +1,6 @@
 import { Entity, ManyToOne } from 'typeorm';
 import { ProductRating } from '../../models/product-rating.entity';
-import { Photo } from '../../../../local-files/models/photo.entity';
+import { Photo } from 'src/module/local-files/entities/photo.entity';
 
 @Entity('product_rating_photos')
 export class ProductRatingPhoto extends Photo {

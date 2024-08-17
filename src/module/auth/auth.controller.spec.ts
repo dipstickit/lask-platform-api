@@ -79,18 +79,31 @@ describe('AuthController', () => {
   describe('login', () => {
     it('should return req.user', async () => {
       const { email, password } = generate(RegisterDto);
-      const user = await controller.login({
-        user: { email, password },
-      } as unknown as Request);
+      const mockUser: User = {
+        id: 1,
+        email,
+        password,
+        firstName: null,
+        lastName: null,
+        registered: new Date(),
+        role: Role.Customer,
+      };
+      const req = { user: mockUser } as unknown as Request & { user: User };
+      const user = await controller.login(req);
       expect(user).toBeDefined();
-      expect(user).toEqual({ email, password });
+      expect(user).toEqual({
+        email,
+        id: mockUser.id,
+        role: mockUser.role,
+      });
     });
   });
 
   describe('logout', () => {
     it('should call logout method', async () => {
       const logout = jest.fn();
-      await controller.logout({ logOut: logout } as unknown as Request);
+      const req = { logOut: logout } as unknown as Request;
+      await controller.logout(req);
       expect(logout).toHaveBeenCalled();
     });
   });

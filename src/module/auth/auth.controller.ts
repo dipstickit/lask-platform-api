@@ -50,10 +50,15 @@ export class AuthController {
   @ApiCreatedResponse({ description: 'User logged out' })
   @ApiUnauthorizedResponse({ description: 'User is not logged in' })
   async logout(@Req() req: Request): Promise<void> {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Failed to destroy session:', err);
-      }
+    return new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Failed to destroy session:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
 }

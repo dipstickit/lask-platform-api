@@ -8,19 +8,17 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './module/users/users.module';
 import { RoleModule } from './module/role/role.module';
-import { ProductsPhotoModule } from './module/catalog/products/products-photo/products-photo.module';
 import { ProductRatingsModule } from './module/catalog/product-ratings/product-ratings.module';
 import { LocalFilesModule } from './module/local-files/local-files.module';
 import { ProductsModule } from './module/catalog/products/products.module';
 import { CatalogModule } from './module/catalog/catalog.module';
 import { SettingsModule } from './module/settings/settings.module';
-import { CategoryGroupModule } from './module/catalog/category-group/category-group.module';
-import { CategoriesModule } from './module/catalog/category-group/categories/categories.module';
 import { ImportExportModule } from './module/import-export/import-export.module';
 import { PagesModule } from './module/pages/pages.module';
 import { WishlistsModule } from './module/wishlists/wishlists.module';
 import { SalesModule } from './module/sales/sales.module';
 import { CartsModule } from './module/carts/carts.module';
+import { CategoriesModule } from './module/catalog/categories/categories.module';
 
 @Module({
   imports: [
@@ -36,11 +34,10 @@ import { CartsModule } from './module/carts/carts.module';
     CategoriesModule,
     CatalogModule,
     ProductsModule,
-    ProductsPhotoModule,
+    ProductsModule,
     ProductRatingsModule,
     LocalFilesModule,
     SettingsModule,
-    CategoryGroupModule,
     ImportExportModule,
     PagesModule,
     WishlistsModule,
