@@ -1,9 +1,21 @@
 import { Module } from '@nestjs/common';
-import { SalesService } from './sales.service';
-import { SalesController } from './sales.controller';
+import { DeliveryMethodsModule } from './delivery-methods/delivery-methods.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { OrdersModule } from './orders/orders.module';
+import { ReturnsModule } from './returns/returns.module';
 
 @Module({
-  controllers: [SalesController],
-  providers: [SalesService],
+  imports: [
+    DeliveryMethodsModule,
+    PaymentMethodsModule,
+    OrdersModule,
+    ReturnsModule,
+  ],
+  exports: [
+    DeliveryMethodsModule,
+    PaymentMethodsModule,
+    OrdersModule,
+    ReturnsModule,
+  ],
 })
 export class SalesModule {}

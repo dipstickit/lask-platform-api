@@ -20,6 +20,7 @@ import { ImportExportModule } from './module/import-export/import-export.module'
 import { PagesModule } from './module/pages/pages.module';
 import { WishlistsModule } from './module/wishlists/wishlists.module';
 import { SalesModule } from './module/sales/sales.module';
+import { CartsModule } from './module/carts/carts.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SalesModule } from './module/sales/sales.module';
     PagesModule,
     WishlistsModule,
     SalesModule,
+    CartsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

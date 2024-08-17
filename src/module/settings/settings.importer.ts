@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from './settings.service';
-import { Setting } from './entities/setting.entity';
-
-import { SettingType } from './models/setting-type.enum';
-import { Importer } from '../import-export/models/importer.interface';
 import { Collection } from '../import-export/models/collection.type';
-import { IdMap } from '../import-export/models/id-map.type';
+import { Setting } from './models/setting.entity';
+import { SettingType } from './models/setting-type.enum';
 import { ParseError } from '../errors/parse.error';
+import { Importer } from '../import-export/models/importer.interface';
+import { IdMap } from '../import-export/models/id-map.type';
 
 @Injectable()
 export class SettingsImporter implements Importer {

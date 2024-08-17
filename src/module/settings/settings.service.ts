@@ -1,17 +1,18 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
-import { Setting } from './entities/setting.entity';
+import { Setting } from './models/setting.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SettingType } from './models/setting-type.enum';
-import validator from 'validator';
-const { isISO4217, isISO31661Alpha2 } = validator;
-import { isBooleanString, isNumberString, isString } from 'class-validator';
-import { CreateSettingDto } from './dto/create-setting.dto';
-import { UpdateSettingDto } from './dto/update-setting.dto';
+import { SettingCreateDto } from './dto/setting-create.dto';
 import { NotFoundError } from '../errors/not-found.error';
-import { ConflictError } from '../errors/conflict.error';
+import { SettingUpdateDto } from './dto/setting-update.dto';
+import { BUILTIN_SETTINGS } from './builtin-settings.data';
+import { SettingType } from './models/setting-type.enum';
 import { TypeCheckError } from '../errors/type-check.error';
-import { BUILTIN_SETTINGS } from './data/builtin-settings.data';
+import validator from 'validator';
+import isISO4217 = validator.isISO4217;
+import isISO31661Alpha2 = validator.isISO31661Alpha2;
+import { isBooleanString, isNumberString, isString } from 'class-validator';
+import { ConflictError } from '../errors/conflict.error';
 
 @Injectable()
 export class SettingsService implements OnModuleInit {
@@ -25,11 +26,7 @@ export class SettingsService implements OnModuleInit {
         await this.createSetting(setting);
       }
     } catch (e) {
-      if (e instanceof QueryFailedError) {
-        console.error('Builtin settings already exist');
-      } else {
-        throw e;
-      }
+      // ignore
     }
   }
 
@@ -57,7 +54,7 @@ export class SettingsService implements OnModuleInit {
     return setting.value;
   }
 
-  async createSetting(data: CreateSettingDto): Promise<Setting> {
+  async createSetting(data: SettingCreateDto): Promise<Setting> {
     try {
       const setting = new Setting();
       setting.builtin = data.builtin;
@@ -79,7 +76,7 @@ export class SettingsService implements OnModuleInit {
     }
   }
 
-  async updateSetting(id: number, data: UpdateSettingDto): Promise<Setting> {
+  async updateSetting(id: number, data: SettingUpdateDto): Promise<Setting> {
     const setting = await this.settingsRepository.findOne({ where: { id } });
     if (!setting) {
       throw new NotFoundError('setting', 'id', id.toString());

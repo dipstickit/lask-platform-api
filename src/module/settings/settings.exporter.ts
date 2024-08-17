@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { Exporter } from '../import-export/models/exporter.interface';
-import { Setting } from './entities/setting.entity';
+import { Setting } from './models/setting.entity';
 
 @Injectable()
 export class SettingsExporter implements Exporter<Setting> {

@@ -1,34 +1,79 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { WishlistsService } from './wishlists.service';
-import { CreateWishlistDto } from './dto/create-wishlist.dto';
-import { UpdateWishlistDto } from './dto/update-wishlist.dto';
+import { ReqUser } from '../auth/decorators/user.decorator';
+import { User } from '../users/models/user.entity';
+import { Wishlist } from './models/wishlist.entity';
+import { Role } from '../users/models/role.enum';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { WishlistCreateDto } from './dto/wishlist-create.dto';
+import { WishlistUpdateDto } from './dto/wishlist-update.dto';
+import {
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('wishlists')
 @Controller('wishlists')
 export class WishlistsController {
   constructor(private readonly wishlistsService: WishlistsService) {}
 
-  @Post()
-  create(@Body() createWishlistDto: CreateWishlistDto) {
-    return this.wishlistsService.create(createWishlistDto);
-  }
-
   @Get()
-  findAll() {
-    return this.wishlistsService.findAll();
+  @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
+  @ApiUnauthorizedResponse({ description: 'User not logged in' })
+  @ApiForbiddenResponse({ description: 'User not authorized' })
+  @ApiOkResponse({ type: [Wishlist], description: 'User wishlists' })
+  async getUserWishlists(@ReqUser() user: User): Promise<Wishlist[]> {
+    return this.wishlistsService.getUserWishlists(user);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.wishlistsService.findOne(+id);
+  @Post()
+  @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
+  @ApiUnauthorizedResponse({ description: 'User not logged in' })
+  @ApiForbiddenResponse({ description: 'User not authorized' })
+  @ApiCreatedResponse({ type: Wishlist, description: 'Wishlist created' })
+  async createWishlist(
+    @ReqUser() user: User,
+    @Body() body: WishlistCreateDto,
+  ): Promise<Wishlist> {
+    return this.wishlistsService.createWishlist(user, body);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWishlistDto: UpdateWishlistDto) {
-    return this.wishlistsService.update(+id, updateWishlistDto);
+  @Patch('/:id')
+  @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
+  @ApiUnauthorizedResponse({ description: 'User not logged in' })
+  @ApiForbiddenResponse({ description: 'User not authorized' })
+  @ApiNotFoundResponse({ description: 'Wishlist not found' })
+  @ApiOkResponse({ type: Wishlist, description: 'Wishlist updated' })
+  async updateWishlist(
+    @ReqUser() user: User,
+    @Param('id') id: number,
+    @Body() body: WishlistUpdateDto,
+  ): Promise<Wishlist> {
+    return this.wishlistsService.updateWishlist(user, id, body);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.wishlistsService.remove(+id);
+  @Delete('/:id')
+  @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
+  @ApiUnauthorizedResponse({ description: 'User not logged in' })
+  @ApiForbiddenResponse({ description: 'User not authorized' })
+  @ApiNotFoundResponse({ description: 'Wishlist not found' })
+  @ApiOkResponse({ description: 'Wishlist deleted' })
+  async deleteWishlist(
+    @ReqUser() user: User,
+    @Param('id') id: number,
+  ): Promise<void> {
+    await this.wishlistsService.deleteWishlist(user, id);
   }
 }
