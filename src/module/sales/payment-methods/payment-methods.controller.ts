@@ -63,7 +63,7 @@ export class PaymentMethodsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() methodData: PaymentMethodDto,
   ): Promise<PaymentMethod> {
-    return await this.paymentMethodsService.updateMethod(id, methodData);
+    return this.paymentMethodsService.updateMethod(id, methodData);
   }
 
   @Delete(':id')
