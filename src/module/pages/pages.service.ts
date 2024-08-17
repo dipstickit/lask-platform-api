@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
 import { Page } from './models/page.entity';
-import { Repository } from 'typeorm';
 import { PageCreateDto } from './dto/page-create.dto';
 import { PageUpdateDto } from './dto/page-update.dto';
 import { PageGroup } from './models/page-group.entity';
@@ -24,9 +24,7 @@ export class PagesService {
   }
 
   async getPage(id: number) {
-    const page = await this.pagesRepository.findOne({
-      where: { id },
-    });
+    const page = await this.pagesRepository.findOne({ where: { id } });
     if (!page) {
       throw new NotFoundError('page', 'id', id.toString());
     }
@@ -34,34 +32,47 @@ export class PagesService {
   }
 
   async createPage(pageData: PageCreateDto) {
-    const page = new Page();
-    Object.assign(page, pageData);
+    const page = this.pagesRepository.create(pageData);
     return this.pagesRepository.save(page);
   }
 
   async updatePage(id: number, pageData: PageUpdateDto) {
     const page = await this.getPage(id);
-    Object.assign(page, pageData);
+
     if (pageData.groups) {
-      page.groups = [];
-      for (const groupData of pageData.groups) {
-        let group = await this.pageGroupsRepository.findOne({
-          where: { name: groupData.name },
-        });
-        if (!group) {
-          group = new PageGroup();
-          group.name = groupData.name;
-          group = await this.pageGroupsRepository.save(group);
-        }
-        page.groups.push(group);
-      }
+      page.groups = await this.processGroups(pageData.groups);
     }
+
+    Object.assign(page, pageData);
     return this.pagesRepository.save(page);
   }
 
   async deletePage(id: number) {
     await this.getPage(id);
-    await this.pagesRepository.delete({ id });
+    await this.pagesRepository.delete(id);
     return true;
+  }
+
+  private async processGroups(
+    groupsData: { name: string }[],
+  ): Promise<PageGroup[]> {
+    const groupNames = groupsData.map((group) => group.name);
+    const existingGroups = await this.pageGroupsRepository.findBy({
+      name: In(groupNames),
+    });
+
+    const existingGroupNames = new Set(
+      existingGroups.map((group) => group.name),
+    );
+    const newGroups = groupsData
+      .filter((groupData) => !existingGroupNames.has(groupData.name))
+      .map((groupData) => {
+        const group = new PageGroup();
+        group.name = groupData.name;
+        return group;
+      });
+
+    const savedGroups = await this.pageGroupsRepository.save(newGroups);
+    return [...existingGroups, ...savedGroups];
   }
 }

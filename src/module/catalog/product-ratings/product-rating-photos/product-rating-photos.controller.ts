@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Query,
-  StreamableFile,
+  Response,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -35,6 +35,7 @@ import { Features } from '../../../settings/guards/features.decorator';
 import { fileResponseSchema } from '../../../local-files/models/file-response.schema';
 import { fileBodySchema } from '../../../local-files/models/file-body.schema';
 import { MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import { Response as ExpressResponse } from 'express';
 
 @ApiTags('product ratings')
 @Features('Product ratings', 'Product rating photos')
@@ -56,12 +57,14 @@ export class ProductRatingPhotosController {
     @Param('id', ParseIntPipe) ratingId: number,
     @Param('photoId', ParseIntPipe) photoId: number,
     @Query('thumbnail', ParseBoolPipe) thumbnail: boolean,
-  ): Promise<StreamableFile> {
-    return this.productRatingPhotosService.getProductRatingPhoto(
+    @Response() res: ExpressResponse,
+  ): Promise<void> {
+    await this.productRatingPhotosService.getProductRatingPhoto(
       productId,
       ratingId,
       photoId,
       thumbnail,
+      res,
     );
   }
 

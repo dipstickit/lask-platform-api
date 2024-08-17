@@ -6,6 +6,7 @@ import {
   Post,
   UploadedFile,
   UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -15,10 +16,10 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-
-import { ImportService } from './import.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
+
+import { ImportService } from './import.service';
 import { ImportDto } from './dto/import.dto';
 import { ImportStatus } from './models/import-status.interface';
 
@@ -27,7 +28,7 @@ import { ImportStatus } from './models/import-status.interface';
 @ApiUnauthorizedResponse({ description: 'User is not logged in' })
 @ApiForbiddenResponse({ description: 'User is not admin' })
 export class ImportController {
-  constructor(private importService: ImportService) {}
+  constructor(private readonly importService: ImportService) {}
 
   @Post('')
   @ApiBody({
@@ -71,12 +72,19 @@ export class ImportController {
     )
     file: Express.Multer.File,
     @Body() data: ImportDto,
-  ) {
-    return await this.importService.import(
-      file.buffer,
-      file.mimetype,
-      data.clear === 'true',
-      data.noImport === 'true',
-    );
+  ): Promise<ImportStatus> {
+    try {
+      const clear = data.clear === 'true';
+      const noImport = data.noImport === 'true';
+
+      return await this.importService.import(
+        file.buffer,
+        file.mimetype,
+        clear,
+        noImport,
+      );
+    } catch (error) {
+      throw new BadRequestException('Failed to import data');
+    }
   }
 }

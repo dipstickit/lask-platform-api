@@ -23,7 +23,7 @@ import { ImportStatus } from './models/import-status.interface';
 
 @Injectable()
 export class ImportService {
-  private importers: Record<string, Importer> = {
+  private importers: Record<DataType, Importer> = {
     [DataType.Settings]: this.settingsImporter,
     [DataType.Pages]: this.pagesImporter,
     [DataType.Users]: this.usersImporter,
@@ -37,7 +37,8 @@ export class ImportService {
     [DataType.Orders]: this.ordersImporter,
     [DataType.Returns]: this.returnsImporter,
   };
-  private idMaps: Record<string, IdMap> = {};
+
+  private idMaps: Record<DataType, IdMap> = this.initializeIdMaps();
 
   constructor(
     private jsonSerializer: JsonSerializer,
@@ -56,39 +57,93 @@ export class ImportService {
     private returnsImporter: ReturnsImporter,
   ) {}
 
+  private initializeIdMaps(): Record<DataType, IdMap> {
+    const defaultIdMap: IdMap = {};
+    return {
+      [DataType.Settings]: defaultIdMap,
+      [DataType.Pages]: defaultIdMap,
+      [DataType.Users]: defaultIdMap,
+      [DataType.AttributeTypes]: defaultIdMap,
+      [DataType.Products]: defaultIdMap,
+      [DataType.ProductPhotos]: defaultIdMap,
+      [DataType.Categories]: defaultIdMap,
+      [DataType.Wishlists]: defaultIdMap,
+      [DataType.DeliveryMethods]: defaultIdMap,
+      [DataType.PaymentMethods]: defaultIdMap,
+      [DataType.Orders]: defaultIdMap,
+      [DataType.Returns]: defaultIdMap,
+    };
+  }
+
   async import(
     data: Buffer,
     filetype: string,
     clear: boolean,
     noImport: boolean,
   ): Promise<ImportStatus> {
-    this.idMaps = {};
+    this.idMaps = this.initializeIdMaps();
+
     let collections: Record<string, Collection> = {};
+
+    collections = await this.deserializeData(data, filetype);
+
+    const imported: Record<DataType, number> = {} as Record<DataType, number>;
+    const cleared: Record<DataType, number> = {} as Record<DataType, number>;
+    const errors: string[] = [];
+
+    checkDataTypeDependencies(Object.keys(collections));
+    const keys = dataTypeDependencies
+      .map((d) => d[0])
+      .filter((k) => k in collections) as DataType[];
+
+    await this.processCollections(
+      keys,
+      collections,
+      clear,
+      noImport,
+      cleared,
+      imported,
+      errors,
+    );
+
+    return { deleted: cleared, added: imported, errors };
+  }
+
+  private async deserializeData(
+    data: Buffer,
+    filetype: string,
+  ): Promise<Record<string, Collection>> {
     if (filetype === 'application/json') {
-      collections = await this.jsonSerializer.parse(data);
+      return this.jsonSerializer.parse(data);
     } else if (
       filetype === 'application/gzip' ||
       filetype === 'application/x-gzip'
     ) {
-      collections = await this.zipSerializer.parse(data);
+      return this.zipSerializer.parse(data);
+    } else {
+      throw new Error('Unsupported file type');
     }
-    const imported: Record<string, number> = {};
-    const cleared: Record<string, number> = {};
-    const errors: string[] = [];
-    checkDataTypeDependencies(Object.keys(collections));
-    const keys = dataTypeDependencies
-      .map((d) => d[0])
-      .filter((k) => k in collections);
+  }
+
+  private async processCollections(
+    keys: DataType[],
+    collections: Record<string, Collection>,
+    clear: boolean,
+    noImport: boolean,
+    cleared: Record<DataType, number>,
+    imported: Record<DataType, number>,
+    errors: string[],
+  ) {
     for (const key of [...keys].reverse()) {
-      if (!clear || !checkDataType(key)) {
-        continue;
-      }
-      const [deleted, error] = await this.clearCollection(key);
-      cleared[key] = deleted;
-      if (error) {
-        errors.push(error);
+      if (clear && checkDataType(key)) {
+        const [deleted, error] = await this.clearCollection(key);
+        cleared[key] = deleted;
+        if (error) {
+          errors.push(error);
+        }
       }
     }
+
     for (const key of keys) {
       if (noImport || !checkDataType(key)) {
         continue;
@@ -100,24 +155,28 @@ export class ImportService {
         errors.push(error);
       }
     }
-    return { deleted: cleared, added: imported, errors };
   }
 
-  private async importCollection(type: DataType, data: Collection) {
-    let idMap: IdMap | null = null;
+  private async importCollection(
+    type: DataType,
+    data: Collection,
+  ): Promise<[IdMap | null, string | null]> {
     try {
-      idMap = await this.importers[type].import(data, this.idMaps);
-    } catch (e: any) {
-      return [null, e.message] as [null, string];
+      const idMap = await this.importers[type].import(data, this.idMaps);
+      return [idMap, null];
+    } catch (e) {
+      return [null, e.message];
     }
-    return [idMap, null] as [IdMap, null];
   }
 
-  private async clearCollection(type: DataType) {
+  private async clearCollection(
+    type: DataType,
+  ): Promise<[number, string | null]> {
     try {
-      return [await this.importers[type].clear(), null] as [number, null];
-    } catch (e: any) {
-      return [0, e.message] as [number, string];
+      const deleted = await this.importers[type].clear();
+      return [deleted, null];
+    } catch (e) {
+      return [0, e.message];
     }
   }
 }

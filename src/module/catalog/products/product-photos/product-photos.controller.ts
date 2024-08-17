@@ -10,7 +10,7 @@ import {
   ParseIntPipe,
   Post,
   Query,
-  StreamableFile,
+  Response,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -49,11 +49,13 @@ export class ProductPhotosController {
     @Param('id', ParseIntPipe) id: number,
     @Param('photoId', ParseIntPipe) photoId: number,
     @Query('thumbnail', ParseBoolPipe) thumbnail: boolean,
-  ): Promise<StreamableFile> {
+    @Response() res,
+  ): Promise<void> {
     return await this.productPhotosService.getProductPhoto(
       id,
       photoId,
       thumbnail,
+      res,
     );
   }
 

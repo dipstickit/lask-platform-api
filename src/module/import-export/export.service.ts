@@ -20,7 +20,7 @@ import { PagesExporter } from '../pages/pages.exporter';
 
 @Injectable()
 export class ExportService {
-  private exporters: Record<string, Exporter<any>> = {
+  private exporters: Record<DataType, Exporter<any>> = {
     [DataType.Settings]: this.settingExporter,
     [DataType.Pages]: this.pagesExporter,
     [DataType.Users]: this.usersExporter,
@@ -66,10 +66,27 @@ export class ExportService {
 
   async export(data: DataType[], format: 'json' | 'csv') {
     checkDataTypeDependencies(data);
-    const toExport: Record<string, any[]> = {};
+
+    // Initialize toExport with default values
+    const toExport: Record<DataType, any[]> = {
+      [DataType.Settings]: [],
+      [DataType.Pages]: [],
+      [DataType.Users]: [],
+      [DataType.AttributeTypes]: [],
+      [DataType.Products]: [],
+      [DataType.ProductPhotos]: [],
+      [DataType.Categories]: [],
+      [DataType.Wishlists]: [],
+      [DataType.DeliveryMethods]: [],
+      [DataType.PaymentMethods]: [],
+      [DataType.Orders]: [],
+      [DataType.Returns]: [],
+    };
+
     for (const key of data) {
       toExport[key] = await this.exportCollection(key);
     }
+
     if (format === 'json') {
       if (data.includes(DataType.ProductPhotos)) {
         throw new GenericError('Cannot export product photos in JSON format');
@@ -81,11 +98,14 @@ export class ExportService {
         : undefined;
       return await this.zipSerializer.serialize(toExport, photoPaths);
     } else {
-      throw new GenericError('could not serialize export output');
+      throw new GenericError('Invalid format specified');
     }
   }
 
   private async exportCollection(type: DataType) {
+    if (!this.exporters[type]) {
+      throw new GenericError(`No exporter found for type: ${type}`);
+    }
     return await this.exporters[type].export();
   }
 }

@@ -1,10 +1,13 @@
-import { Injectable, StreamableFile } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { NotFoundError } from '../../../errors/not-found.error';
 import { ProductRating } from '../models/product-rating.entity';
 import { ProductRatingPhoto } from './models/product-rating-photo.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LocalFilesService } from '../../../local-files/local-files.service';
+import { Response } from 'express';
+import { createReadStream } from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ProductRatingPhotosService {
@@ -28,7 +31,8 @@ export class ProductRatingPhotosService {
     productRatingId: number,
     photoId: number,
     thumbnail: boolean,
-  ): Promise<StreamableFile> {
+    res: Response,
+  ): Promise<void> {
     const ratingPhoto = await this.productRatingPhotosRepository.findOne({
       where: {
         id: photoId,
@@ -43,7 +47,11 @@ export class ProductRatingPhotosService {
     const photoPath = thumbnail ? ratingPhoto.thumbnailPath : ratingPhoto.path;
     const mimeType = thumbnail ? 'image/jpeg' : ratingPhoto.mimeType;
 
-    return this.localFilesService.getPhoto(photoPath, mimeType);
+    const photoStream = await this.localFilesService.getPhoto(
+      photoPath,
+      mimeType,
+    );
+    photoStream.pipe(res);
   }
 
   async addProductRatingPhoto(
