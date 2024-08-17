@@ -20,7 +20,7 @@ export class ProductRatingPhotosService {
     const productRating = await this.productRatingsRepository.findOne({
       where: { id, user: { id: userId } },
     });
-    return !!productRating;
+    return Boolean(productRating);
   }
 
   async getProductRatingPhoto(
@@ -41,10 +41,9 @@ export class ProductRatingPhotosService {
     }
 
     const photoPath = thumbnail ? ratingPhoto.thumbnailPath : ratingPhoto.path;
-
     const mimeType = thumbnail ? 'image/jpeg' : ratingPhoto.mimeType;
 
-    return await this.localFilesService.getPhoto(photoPath, mimeType);
+    return this.localFilesService.getPhoto(photoPath, mimeType);
   }
 
   async addProductRatingPhoto(
@@ -62,8 +61,9 @@ export class ProductRatingPhotosService {
         productRatingId.toString(),
       );
     }
-    const photo = new ProductRatingPhoto();
+
     const { path, mimeType } = await this.localFilesService.savePhoto(file);
+    const photo = new ProductRatingPhoto();
     photo.path = path;
     photo.mimeType = mimeType;
     photo.thumbnailPath = await this.localFilesService.createPhotoThumbnail(
@@ -71,6 +71,7 @@ export class ProductRatingPhotosService {
     );
     photo.placeholderBase64 =
       await this.localFilesService.createPhotoPlaceholder(file.path);
+
     productRating.photos.push(photo);
     return this.productRatingsRepository.save(productRating);
   }
@@ -90,7 +91,10 @@ export class ProductRatingPhotosService {
         productRatingId.toString(),
       );
     }
-    productRating.photos = productRating.photos.filter((p) => p.id !== photoId);
-    return await this.productRatingsRepository.save(productRating);
+
+    productRating.photos = productRating.photos.filter(
+      (photo) => photo.id !== photoId,
+    );
+    return this.productRatingsRepository.save(productRating);
   }
 }

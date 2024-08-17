@@ -9,7 +9,7 @@ import { Product } from '../models/product.entity';
 
 @Injectable()
 export class ProductPhotosImporter implements Importer {
-  constructor(private productPhotosService: ProductPhotosService) {}
+  constructor(private readonly productPhotosService: ProductPhotosService) {}
 
   async import(
     productPhotos: Collection,
@@ -31,7 +31,7 @@ export class ProductPhotosImporter implements Importer {
     return idMap;
   }
 
-  async clear() {
+  async clear(): Promise<number> {
     const productPhotos = await this.productPhotosService.getProductPhotos();
     let deleted = 0;
     for (const productPhoto of productPhotos) {
@@ -44,20 +44,19 @@ export class ProductPhotosImporter implements Importer {
     return deleted;
   }
 
-  private parseProductPhotos(productPhotos: Collection, productsIdMap: IdMap) {
-    const parsedProductPhotos: ProductPhoto[] = [];
-    for (const productPhoto of productPhotos) {
-      parsedProductPhotos.push(
-        this.parseProductPhoto(productPhoto, productsIdMap),
-      );
-    }
-    return parsedProductPhotos;
+  private parseProductPhotos(
+    productPhotos: Collection,
+    productsIdMap: IdMap,
+  ): ProductPhoto[] {
+    return productPhotos.map((productPhoto) =>
+      this.parseProductPhoto(productPhoto, productsIdMap),
+    );
   }
 
   private parseProductPhoto(
     productPhoto: Collection[number],
     productsIdMap: IdMap,
-  ) {
+  ): ProductPhoto {
     const parsedProductPhoto = new ProductPhoto();
     try {
       parsedProductPhoto.id = productPhoto.id as number;
@@ -66,7 +65,7 @@ export class ProductPhotosImporter implements Importer {
       } as Product;
       parsedProductPhoto.path = productPhoto.path as string;
       parsedProductPhoto.mimeType = productPhoto.mimeType as string;
-    } catch (e) {
+    } catch {
       throw new ParseError('product-photo');
     }
     return parsedProductPhoto;

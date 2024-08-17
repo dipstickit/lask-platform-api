@@ -10,7 +10,7 @@ import { Product } from '../products/models/product.entity';
 
 @Injectable()
 export class CategoriesImporter implements Importer {
-  constructor(private categoriesService: CategoriesService) {}
+  constructor(private readonly categoriesService: CategoriesService) {}
 
   async import(
     categories: Collection,
@@ -18,20 +18,22 @@ export class CategoriesImporter implements Importer {
   ): Promise<IdMap> {
     const parsedCategories = this.parseCategories(categories, idMaps.products);
     const idMap: IdMap = {};
+
     for (const category of parsedCategories) {
       const { id, parentCategory, products, ...createDto } = category;
-      const { id: newId } = await this.categoriesService.createCategory(
-        createDto,
-      );
-      idMap[category.id] = newId;
+      const { id: newId } =
+        await this.categoriesService.createCategory(createDto);
+      idMap[id] = newId;
     }
+
     for (const category of parsedCategories) {
       await this.categoriesService.updateCategory(idMap[category.id], {
         groups: category.groups,
-        parentCategoryId: category.parentCategory
+        parentCategoryId: category.parentCategory?.id
           ? idMap[category.parentCategory.id]
           : undefined,
       });
+
       for (const product of category.products) {
         await this.categoriesService.addCategoryProduct(
           idMap[category.id],
@@ -39,73 +41,92 @@ export class CategoriesImporter implements Importer {
         );
       }
     }
+
     return idMap;
   }
 
-  async clear() {
+  async clear(): Promise<number> {
     const categories = await this.categoriesService.getCategories();
     let deleted = 0;
+
     for (const category of categories) {
       await this.categoriesService.deleteCategory(category.id);
       deleted += 1;
     }
+
     return deleted;
   }
 
-  private parseCategories(categories: Collection, productsIdMap: IdMap) {
-    const parsedCategories: Category[] = [];
-    for (const category of categories) {
-      parsedCategories.push(this.parseCategory(category, productsIdMap));
-    }
-    return parsedCategories;
+  private parseCategories(
+    categories: Collection,
+    productsIdMap: IdMap,
+  ): Category[] {
+    return categories.map((category) =>
+      this.parseCategory(category, productsIdMap),
+    );
   }
 
-  private parseCategory(category: Collection[number], productsIdMap: IdMap) {
+  private parseCategory(
+    category: Collection[number],
+    productsIdMap: IdMap,
+  ): Category {
     const parsedCategory = new Category();
+
     try {
-      parsedCategory.id = category.id as number;
-      parsedCategory.name = category.name as string;
-      parsedCategory.description = category.description as string;
-      parsedCategory.slug = category.slug as string;
-      parsedCategory.parentCategory = {
-        id: category.parentCategoryId as number,
-      } as Category;
-      if (typeof category.groups === 'string') {
-        category.groups = JSON.parse(category.groups);
+      parsedCategory.id = Number(category.id);
+      parsedCategory.name = String(category.name);
+      parsedCategory.description = String(category.description);
+      parsedCategory.slug = String(category.slug);
+
+      if (category.parentCategoryId) {
+        parsedCategory.parentCategory = {
+          id: Number(category.parentCategoryId),
+        } as Category;
       }
-      parsedCategory.groups = (category.groups as Collection).map((group) =>
-        this.parseCategoryGroup(group),
+
+      parsedCategory.groups = this.parseGroups(category.groups);
+      parsedCategory.products = this.parseProducts(
+        category.products,
+        productsIdMap,
       );
-      if (typeof category.products === 'string') {
-        category.products = JSON.parse(category.products);
-      }
-      parsedCategory.products = (category.products as Collection).map(
-        (product) => this.parseCategoryProduct(product, productsIdMap),
-      );
-    } catch (e) {
+    } catch {
       throw new ParseError('category');
     }
+
     return parsedCategory;
   }
 
-  private parseCategoryGroup(group: Collection[number]) {
-    const parsedGroup = new CategoryGroup();
-    try {
-      parsedGroup.name = group.name as string;
-    } catch (e) {
-      throw new ParseError('category group');
+  private parseGroups(groups: unknown): CategoryGroup[] {
+    if (typeof groups === 'string') {
+      try {
+        groups = JSON.parse(groups);
+      } catch {
+        throw new ParseError('category group');
+      }
     }
-    return parsedGroup;
+
+    return (groups as Collection).map((group) => {
+      const parsedGroup = new CategoryGroup();
+      parsedGroup.name = String(group.name);
+      return parsedGroup;
+    });
   }
 
-  private parseCategoryProduct(
-    product: Collection[number],
-    productsIdMap: IdMap,
-  ) {
-    try {
-      return { id: productsIdMap[product.id as number] as number } as Product;
-    } catch (e) {
-      throw new ParseError('category product');
+  private parseProducts(products: unknown, productsIdMap: IdMap): Product[] {
+    if (typeof products === 'string') {
+      try {
+        products = JSON.parse(products);
+      } catch {
+        throw new ParseError('category product');
+      }
     }
+
+    return (products as Collection).map((product) => {
+      const id = productsIdMap[Number(product.id)] as number;
+      if (id === undefined) {
+        throw new ParseError('category product');
+      }
+      return { id } as Product;
+    });
   }
 }

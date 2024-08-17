@@ -5,10 +5,10 @@ import { Exporter } from '../../../import-export/models/exporter.interface';
 import * as mime from 'mime-types';
 
 @Injectable()
-export class ProductPhotosExporter implements Exporter<ProductPhoto> {
-  constructor(private productPhotosService: ProductPhotosService) {}
+export class ProductPhotosExporter implements Exporter<any> {
+  constructor(private readonly productPhotosService: ProductPhotosService) {}
 
-  async export(): Promise<ProductPhoto[]> {
+  async export(): Promise<any[]> {
     const productPhotos = await this.productPhotosService.getProductPhotos();
     productPhotos.sort((a, b) => {
       if (a.product.id !== b.product.id) {
@@ -20,20 +20,16 @@ export class ProductPhotosExporter implements Exporter<ProductPhoto> {
         photosOrder.indexOf(b.id.toString())
       );
     });
-    const preparedProductPhotos: ProductPhoto[] = [];
-    for (const productPhoto of productPhotos) {
-      preparedProductPhotos.push(this.prepareProductPhoto(productPhoto));
-    }
-    return preparedProductPhotos;
+
+    return productPhotos.map(this.prepareProductPhoto);
   }
 
-  private prepareProductPhoto(productPhoto: ProductPhoto) {
-    const preparedProductPhoto = new ProductPhoto() as any;
-    preparedProductPhoto.id = productPhoto.id;
-    preparedProductPhoto.productId = productPhoto.product.id;
-    preparedProductPhoto.path =
-      productPhoto.path + '.' + mime.extension(productPhoto.mimeType);
-    preparedProductPhoto.mimeType = productPhoto.mimeType;
-    return preparedProductPhoto;
+  private prepareProductPhoto(productPhoto: ProductPhoto): any {
+    return {
+      id: productPhoto.id,
+      productId: productPhoto.product.id,
+      path: `${productPhoto.path}.${mime.extension(productPhoto.mimeType)}`,
+      mimeType: productPhoto.mimeType,
+    };
   }
 }

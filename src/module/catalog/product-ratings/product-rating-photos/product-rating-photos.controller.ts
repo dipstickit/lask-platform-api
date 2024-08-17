@@ -1,10 +1,8 @@
 import {
   Controller,
   Delete,
-  FileTypeValidator,
   ForbiddenException,
   Get,
-  MaxFileSizeValidator,
   Param,
   ParseBoolPipe,
   ParseFilePipe,
@@ -36,12 +34,15 @@ import { ProductRating } from '../models/product-rating.entity';
 import { Features } from '../../../settings/guards/features.decorator';
 import { fileResponseSchema } from '../../../local-files/models/file-response.schema';
 import { fileBodySchema } from '../../../local-files/models/file-body.schema';
+import { MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 
 @ApiTags('product ratings')
 @Features('Product ratings', 'Product rating photos')
 @Controller('products/:productId/ratings/:id/photos')
 export class ProductRatingPhotosController {
-  constructor(private productRatingPhotosService: ProductRatingPhotosService) {}
+  constructor(
+    private readonly productRatingPhotosService: ProductRatingPhotosService,
+  ) {}
 
   @Get(':photoId')
   @ApiOkResponse({
@@ -52,19 +53,19 @@ export class ProductRatingPhotosController {
   @ApiNotFoundResponse({ description: 'Product rating photo not found' })
   async getProductRatingPhoto(
     @Param('productId', ParseIntPipe) productId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) ratingId: number,
     @Param('photoId', ParseIntPipe) photoId: number,
     @Query('thumbnail', ParseBoolPipe) thumbnail: boolean,
   ): Promise<StreamableFile> {
-    return await this.productRatingPhotosService.getProductRatingPhoto(
+    return this.productRatingPhotosService.getProductRatingPhoto(
       productId,
-      id,
+      ratingId,
       photoId,
       thumbnail,
     );
   }
 
-  @Post('')
+  @Post()
   @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
   @ApiUnauthorizedResponse({ description: 'User not logged in' })
   @ApiForbiddenResponse({ description: 'User not authorized' })
@@ -79,25 +80,28 @@ export class ProductRatingPhotosController {
   async addProductRatingPhoto(
     @ReqUser() user: User,
     @Param('productId', ParseIntPipe) productId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) ratingId: number,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
           new FileTypeValidator({ fileType: /^image\/(png|jpe?g|gif|webp)/ }),
         ],
       }),
     )
     file: Express.Multer.File,
   ): Promise<ProductRating> {
-    const checkUser =
-      await this.productRatingPhotosService.checkProductRatingUser(id, user.id);
-    if (!checkUser && user.role === Role.Customer) {
-      throw new ForbiddenException(['forbidden']);
+    const isUserAuthorized =
+      await this.productRatingPhotosService.checkProductRatingUser(
+        ratingId,
+        user.id,
+      );
+    if (!isUserAuthorized && user.role === Role.Customer) {
+      throw new ForbiddenException('Access denied');
     }
-    return await this.productRatingPhotosService.addProductRatingPhoto(
+    return this.productRatingPhotosService.addProductRatingPhoto(
       productId,
-      id,
+      ratingId,
       file,
     );
   }
@@ -114,17 +118,20 @@ export class ProductRatingPhotosController {
   async deleteProductRatingPhoto(
     @ReqUser() user: User,
     @Param('productId', ParseIntPipe) productId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) ratingId: number,
     @Param('photoId', ParseIntPipe) photoId: number,
   ): Promise<ProductRating> {
-    const checkUser =
-      await this.productRatingPhotosService.checkProductRatingUser(id, user.id);
-    if (!checkUser && user.role === Role.Customer) {
-      throw new ForbiddenException(['forbidden']);
+    const isUserAuthorized =
+      await this.productRatingPhotosService.checkProductRatingUser(
+        ratingId,
+        user.id,
+      );
+    if (!isUserAuthorized && user.role === Role.Customer) {
+      throw new ForbiddenException('Access denied');
     }
-    return await this.productRatingPhotosService.deleteProductRatingPhoto(
+    return this.productRatingPhotosService.deleteProductRatingPhoto(
       productId,
-      id,
+      ratingId,
       photoId,
     );
   }

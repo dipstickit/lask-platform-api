@@ -13,36 +13,40 @@ export class ProductRatingsService {
   constructor(
     @InjectRepository(ProductRating)
     private readonly productRatingsRepository: Repository<ProductRating>,
-    private productsService: ProductsService,
-    private settingsService: SettingsService,
+    private readonly productsService: ProductsService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async getProductRatings(productId: number): Promise<ProductRating[]> {
-    const rating = await this.productRatingsRepository.find({
+    const ratings = await this.productRatingsRepository.find({
       where: { product: { id: productId } },
       relations: ['user'],
     });
+
     if (
       (await this.settingsService.getSettingValueByName(
         'Product rating photos',
       )) !== 'true'
     ) {
-      rating.forEach((r) => (r.photos = []));
+      ratings.forEach((rating) => (rating.photos = []));
     }
-    return rating;
+
+    return ratings;
   }
 
   async getProductRating(
     id: number,
     productId: number,
   ): Promise<ProductRating> {
-    const productRating = await this.productRatingsRepository.findOne({
+    const rating = await this.productRatingsRepository.findOne({
       where: { id, product: { id: productId } },
     });
-    if (!productRating) {
+
+    if (!rating) {
       throw new NotFoundError('product rating');
     }
-    return productRating;
+
+    return rating;
   }
 
   async createProductRating(
@@ -51,19 +55,22 @@ export class ProductRatingsService {
     createData: ProductRatingDto,
   ): Promise<ProductRating> {
     const product = await this.productsService.getProduct(productId);
-    const newProductRating = new ProductRating();
-    newProductRating.user = user;
-    newProductRating.product = product;
-    newProductRating.rating = createData.rating;
-    newProductRating.comment = createData.comment;
-    return this.productRatingsRepository.save(newProductRating);
+    const newRating = this.productRatingsRepository.create({
+      user,
+      product,
+      rating: createData.rating,
+      comment: createData.comment,
+    });
+
+    return this.productRatingsRepository.save(newRating);
   }
 
   async checkProductRatingUser(id: number, userId: number): Promise<boolean> {
-    const productRating = await this.productRatingsRepository.findOne({
+    const rating = await this.productRatingsRepository.findOne({
       where: { id, user: { id: userId } },
     });
-    return !!productRating;
+
+    return !!rating;
   }
 
   async updateProductRating(
@@ -71,10 +78,10 @@ export class ProductRatingsService {
     id: number,
     updateData: ProductRatingDto,
   ): Promise<ProductRating> {
-    const productRating = await this.getProductRating(id, productId);
-    productRating.rating = updateData.rating;
-    productRating.comment = updateData.comment;
-    return this.productRatingsRepository.save(productRating);
+    const rating = await this.getProductRating(id, productId);
+    Object.assign(rating, updateData);
+
+    return this.productRatingsRepository.save(rating);
   }
 
   async deleteProductRating(productId: number, id: number): Promise<boolean> {
@@ -83,6 +90,7 @@ export class ProductRatingsService {
       id,
       product: { id: productId },
     });
+
     return true;
   }
 }

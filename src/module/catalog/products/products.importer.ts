@@ -10,7 +10,7 @@ import { AttributeType } from '../attribute-types/models/attribute-type.entity';
 
 @Injectable()
 export class ProductsImporter implements Importer {
-  constructor(private productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   async import(
     products: Collection,
@@ -18,69 +18,74 @@ export class ProductsImporter implements Importer {
   ): Promise<IdMap> {
     const parsedProducts = this.parseProducts(products, idMaps.attributeTypes);
     const idMap: IdMap = {};
+
     for (const product of parsedProducts) {
       const { id, ...createDto } = product;
       const { id: newId } = await this.productsService.createProduct(createDto);
-      idMap[product.id] = newId;
+      idMap[id] = newId;
     }
+
     return idMap;
   }
 
-  async clear() {
+  async clear(): Promise<number> {
     const products = await this.productsService.getProducts(true);
-    let deleted = 0;
-    for (const product of products) {
-      await this.productsService.deleteProduct(product.id);
-      deleted += 1;
-    }
-    return deleted;
+    const deletePromises = products.map((product) =>
+      this.productsService.deleteProduct(product.id),
+    );
+    await Promise.all(deletePromises);
+    return products.length;
   }
 
-  private parseProducts(products: Collection, attributeTypesIdMap: IdMap) {
-    const parsedProducts: Product[] = [];
-    for (const product of products) {
-      parsedProducts.push(this.parseProduct(product, attributeTypesIdMap));
-    }
-    return parsedProducts;
+  private parseProducts(
+    products: Collection,
+    attributeTypesIdMap: IdMap,
+  ): Product[] {
+    return products.map((product) =>
+      this.parseProduct(product, attributeTypesIdMap),
+    );
   }
 
   private parseProduct(
     product: Collection[number],
     attributeTypesIdMap: IdMap,
-  ) {
-    const parsedProduct = new Product();
+  ): Product {
     try {
+      const parsedProduct = new Product();
       parsedProduct.id = product.id as number;
       parsedProduct.name = product.name as string;
       parsedProduct.description = product.description as string;
       parsedProduct.price = product.price as number;
       parsedProduct.stock = product.stock as number;
       parsedProduct.visible = product.visible as boolean;
+
       if (typeof product.attributes === 'string') {
         product.attributes = JSON.parse(product.attributes);
       }
-      parsedProduct.attributes = (product.attributes as Collection).map((a) =>
-        this.parseAttribute(a, attributeTypesIdMap),
+
+      parsedProduct.attributes = (product.attributes as Collection).map(
+        (attribute) => this.parseAttribute(attribute, attributeTypesIdMap),
       );
-    } catch (e) {
+
+      return parsedProduct;
+    } catch (error) {
       throw new ParseError('product');
     }
-    return parsedProduct;
   }
 
   private parseAttribute(
     attribute: Collection[number],
     attributeTypesIdMap: IdMap,
-  ) {
-    const parsedAttribute = new Attribute();
+  ): Attribute {
     try {
+      const parsedAttribute = new Attribute();
       parsedAttribute.value = attribute.value as string;
       parsedAttribute.type = {
         id: attributeTypesIdMap[attribute.typeId as number],
       } as AttributeType;
-    } catch (e) {
+      return parsedAttribute;
+    } catch (error) {
       throw new ParseError('attribute');
     }
-    return parsedAttribute;
   }
 }

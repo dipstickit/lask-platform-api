@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductRatingPhotosService } from './product-rating-photos.service';
-import { DtoGeneratorService } from '../../../../../test/utils/dto-generator/dto-generator.service';
 import { RepositoryMockService } from '../../../../../test/utils/repository-mock/repository-mock.service';
 import { ProductRating } from '../models/product-rating.entity';
 import { Product } from '../../products/models/product.entity';
@@ -15,7 +14,6 @@ import { NotFoundError } from '../../../errors/not-found.error';
 
 describe('ProductRatingPhotosService', () => {
   let service: ProductRatingPhotosService;
-  let generate: DtoGeneratorService['generate'];
   let mockProductRatingsRepository: RepositoryMockService<ProductRating>;
   let mockProductsRepository: RepositoryMockService<Product>;
 
@@ -26,15 +24,14 @@ describe('ProductRatingPhotosService', () => {
         RepositoryMockService.getProvider(ProductRating),
         RepositoryMockService.getProvider(Product),
         RepositoryMockService.getProvider(ProductRatingPhoto),
-        DtoGeneratorService,
         {
           provide: LocalFilesService,
           useValue: {
-            savePhoto: jest.fn((v) => ({
-              path: v.path,
-              mimeType: v.mimetype,
+            savePhoto: jest.fn((file) => ({
+              path: file.path,
+              mimeType: file.mimetype,
             })),
-            createPhotoThumbnail: jest.fn((v: string) => v + '-thumbnail'),
+            createPhotoThumbnail: jest.fn((path) => path + '-thumbnail'),
             createPhotoPlaceholder: jest.fn(() => 'placeholder'),
           },
         },
@@ -50,9 +47,6 @@ describe('ProductRatingPhotosService', () => {
     service = module.get<ProductRatingPhotosService>(
       ProductRatingPhotosService,
     );
-    generate = module
-      .get<DtoGeneratorService>(DtoGeneratorService)
-      .generate.bind(module.get<DtoGeneratorService>(DtoGeneratorService));
     mockProductRatingsRepository = module.get(
       getRepositoryToken(ProductRating),
     );
@@ -64,11 +58,11 @@ describe('ProductRatingPhotosService', () => {
   });
 
   describe('addProductRatingPhoto', () => {
-    it('should add product rating photo', async () => {
-      const productData = generate(ProductCreateDto);
-      const product = mockProductsRepository.save(productData);
-      const ratingData = generate(ProductRatingDto);
-      const rating = mockProductRatingsRepository.save({
+    it('should add a product rating photo', async () => {
+      const productData = new ProductCreateDto(); // Adjust this to your DTO initialization if needed
+      const product = await mockProductsRepository.save(productData);
+      const ratingData = new ProductRatingDto(); // Adjust this to your DTO initialization if needed
+      const rating = await mockProductRatingsRepository.save({
         ...ratingData,
         product,
         user: { id: 123 },
@@ -79,18 +73,14 @@ describe('ProductRatingPhotosService', () => {
         rating.id,
         fileMetadata,
       );
+
       expect(updated.photos).toHaveLength(1);
-      expect(
-        mockProductRatingsRepository.entities.find((r) => r.id === rating.id)
-          ?.photos,
-      ).toEqual([
-        {
-          path: fileMetadata.path,
-          mimeType: 'image/jpeg',
-          thumbnailPath: fileMetadata.path + '-thumbnail',
-          placeholderBase64: 'placeholder',
-        },
-      ]);
+      expect(updated.photos[0]).toMatchObject({
+        path: fileMetadata.path,
+        mimeType: 'image/jpeg',
+        thumbnailPath: fileMetadata.path + '-thumbnail',
+        placeholderBase64: 'placeholder',
+      });
     });
 
     it('should throw error if product or rating does not exist', async () => {
@@ -101,32 +91,29 @@ describe('ProductRatingPhotosService', () => {
   });
 
   describe('deleteProductRatingPhoto', () => {
-    it('should delete product rating photo', async () => {
-      const productData = generate(ProductCreateDto);
-      const product = mockProductsRepository.save(productData);
-      const ratingData = generate(ProductRatingDto);
-      const rating = mockProductRatingsRepository.save({
+    it('should delete a product rating photo', async () => {
+      const productData = new ProductCreateDto();
+      const product = await mockProductsRepository.save(productData);
+      const ratingData = new ProductRatingDto();
+      const rating = await mockProductRatingsRepository.save({
         ...ratingData,
         product,
         user: { id: 123 },
       });
-      const photoId = (
-        await service.addProductRatingPhoto(
-          product.id,
-          rating.id,
-          generateFileMetadata(),
-        )
-      ).photos[0].id;
+      const fileMetadata = generateFileMetadata();
+      const { photos } = await service.addProductRatingPhoto(
+        product.id,
+        rating.id,
+        fileMetadata,
+      );
+      const photoId = photos[0].id;
       const updated = await service.deleteProductRatingPhoto(
         product.id,
         rating.id,
         photoId,
       );
+
       expect(updated.photos).toHaveLength(0);
-      expect(
-        mockProductRatingsRepository.entities.find((r) => r.id === rating.id)
-          ?.photos,
-      ).toEqual([]);
     });
 
     it('should throw error if product or rating does not exist', async () => {

@@ -31,28 +31,26 @@ import { User } from '../../users/models/user.entity';
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
-  constructor(private productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   @Get()
   @ApiOkResponse({ type: [Product], description: 'List of all products' })
-  getProducts(@ReqUser() user?: User): Promise<Product[]> {
-    if (user && [Role.Admin, Role.Manager, Role.Sales].includes(user?.role)) {
-      return this.productsService.getProducts(true);
-    }
-    return this.productsService.getProducts();
+  async getProducts(@ReqUser() user?: User): Promise<Product[]> {
+    const isAdminOrManagerOrSales =
+      user && [Role.Admin, Role.Manager, Role.Sales].includes(user.role);
+    return this.productsService.getProducts(isAdminOrManagerOrSales);
   }
 
   @Get('/:id')
   @ApiNotFoundResponse({ description: 'Product not found' })
-  @ApiOkResponse({ type: Product, description: 'Product with given id' })
+  @ApiOkResponse({ type: Product, description: 'Product with the given id' })
   async getProduct(
     @Param('id', ParseIntPipe) id: number,
     @ReqUser() user?: User,
   ): Promise<Product> {
-    if (user && [Role.Admin, Role.Manager, Role.Sales].includes(user?.role)) {
-      return this.productsService.getProduct(id, true);
-    }
-    return await this.productsService.getProduct(id);
+    const isAdminOrManagerOrSales =
+      user && [Role.Admin, Role.Manager, Role.Sales].includes(user.role);
+    return this.productsService.getProduct(id, isAdminOrManagerOrSales);
   }
 
   @Post()
@@ -61,7 +59,7 @@ export class ProductsController {
   @ApiForbiddenResponse({ description: 'User not authorized' })
   @ApiCreatedResponse({ type: Product, description: 'Product created' })
   @ApiBadRequestResponse({ description: 'Invalid product data' })
-  createProduct(@Body() product: ProductCreateDto): Promise<Product> {
+  async createProduct(@Body() product: ProductCreateDto): Promise<Product> {
     return this.productsService.createProduct(product);
   }
 
@@ -76,7 +74,7 @@ export class ProductsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() product: ProductUpdateDto,
   ): Promise<Product> {
-    return await this.productsService.updateProduct(id, product);
+    return this.productsService.updateProduct(id, product);
   }
 
   @Delete('/:id')
@@ -100,6 +98,6 @@ export class ProductsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() attributes: AttributeDto[],
   ): Promise<Product> {
-    return await this.productsService.updateProductAttributes(id, attributes);
+    return this.productsService.updateProductAttributes(id, attributes);
   }
 }

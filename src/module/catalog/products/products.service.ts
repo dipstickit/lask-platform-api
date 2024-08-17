@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
 import { Product } from './models/product.entity';
-import { In, Repository } from 'typeorm';
 import { ProductCreateDto } from './dto/product-create.dto';
 import { ProductUpdateDto } from './dto/product-update.dto';
 import { Attribute } from './models/attribute.entity';
@@ -13,21 +13,22 @@ import { AttributeTypesService } from '../attribute-types/attribute-types.servic
 @Injectable()
 export class ProductsService {
   constructor(
-    @InjectRepository(Product) private productsRepository: Repository<Product>,
+    @InjectRepository(Product)
+    private readonly productsRepository: Repository<Product>,
     @InjectRepository(Attribute)
-    private attributesRepository: Repository<Attribute>,
-    private attributeTypesService: AttributeTypesService,
+    private readonly attributesRepository: Repository<Attribute>,
+    private readonly attributeTypesService: AttributeTypesService,
   ) {}
 
-  async getProducts(withHidden?: boolean): Promise<Product[]> {
+  async getProducts(withHidden = false): Promise<Product[]> {
     return this.productsRepository.find({
-      where: { visible: !withHidden ? true : undefined },
+      where: { visible: !withHidden },
     });
   }
 
-  async getProduct(id: number, withHidden?: boolean): Promise<Product> {
+  async getProduct(id: number, withHidden = false): Promise<Product> {
     const product = await this.productsRepository.findOne({
-      where: { id, visible: !withHidden ? true : undefined },
+      where: { id, visible: !withHidden },
     });
     if (!product) {
       throw new NotFoundError('product', 'id', id.toString());
@@ -36,9 +37,10 @@ export class ProductsService {
   }
 
   async createProduct(productData: ProductCreateDto): Promise<Product> {
-    const product = new Product();
-    Object.assign(product, productData);
-    product.photosOrder = '';
+    const product = this.productsRepository.create({
+      ...productData,
+      photosOrder: '',
+    });
     return this.productsRepository.save(product);
   }
 
@@ -54,12 +56,11 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  async checkProductPhotosOrder(product: Product, newOrder: string) {
-    const photos = product.photos;
-    const sortedPhotos = photos.sort((a, b) => a.id - b.id).map((p) => p.id);
+  private async checkProductPhotosOrder(product: Product, newOrder: string) {
+    const sortedPhotos = product.photos.map((p) => p.id).sort((a, b) => a - b);
     const sortedNewOrder = newOrder
       .split(',')
-      .map((p) => parseInt(p))
+      .map((p) => parseInt(p, 10))
       .sort((a, b) => a - b);
     if (sortedPhotos.join(',') !== sortedNewOrder.join(',')) {
       throw new NotFoundError('product photo');
@@ -72,35 +73,37 @@ export class ProductsService {
     return true;
   }
 
-  async checkProductsStocks(items: OrderItem[]) {
+  async checkProductsStocks(items: OrderItem[]): Promise<boolean> {
+    const productIds = items.map((i) => i.product.id);
     const products = await this.productsRepository.find({
-      where: { id: In(items.map((i) => i.product.id)) },
+      where: { id: In(productIds) },
     });
-    for (const p of products) {
+
+    return products.every((p) => {
       const item = items.find((i) => i.product.id === p.id);
-      if (item && p.stock < item.quantity) {
-        return false;
-      }
-    }
-    return true;
+      return !item || p.stock >= item.quantity;
+    });
   }
 
-  async updateProductsStocks(type: 'add' | 'subtract', items: OrderItem[]) {
+  async updateProductsStocks(
+    type: 'add' | 'subtract',
+    items: OrderItem[],
+  ): Promise<void> {
+    const productIds = items.map((i) => i.product.id);
     const products = await this.productsRepository.find({
-      where: { id: In(items.map((i) => i.product.id)) },
+      where: { id: In(productIds) },
     });
-    for (const p of products) {
-      const item = items.find((i) => i.product.id === p.id);
-      if (!item) {
-        continue;
-      }
-      if (type === 'add') {
-        p.stock += item.quantity;
-      } else {
-        p.stock -= item.quantity;
-      }
-      await this.productsRepository.save(p);
-    }
+
+    await Promise.all(
+      products.map(async (p) => {
+        const item = items.find((i) => i.product.id === p.id);
+        if (!item) return;
+
+        p.stock =
+          type === 'add' ? p.stock + item.quantity : p.stock - item.quantity;
+        await this.productsRepository.save(p);
+      }),
+    );
   }
 
   async updateProductAttributes(
@@ -108,20 +111,23 @@ export class ProductsService {
     attributes: AttributeDto[],
   ): Promise<Product> {
     const product = await this.getProduct(id, true);
-    const attributesToSave = [];
-    for (const attribute of attributes) {
-      const attributeType = await this.attributeTypesService.getAttributeType(
-        attribute.typeId,
-      );
-      await this.attributeTypesService.checkAttributeType(
-        attributeType.valueType,
-        attribute.value,
-      );
-      const newAttribute = new Attribute();
-      newAttribute.type = attributeType;
-      newAttribute.value = attribute.value;
-      attributesToSave.push(newAttribute);
-    }
+    const attributesToSave = await Promise.all(
+      attributes.map(async (attribute) => {
+        const attributeType = await this.attributeTypesService.getAttributeType(
+          attribute.typeId,
+        );
+        await this.attributeTypesService.checkAttributeType(
+          attributeType.valueType,
+          attribute.value,
+        );
+
+        return this.attributesRepository.create({
+          type: attributeType,
+          value: attribute.value,
+        });
+      }),
+    );
+
     product.attributes = await this.attributesRepository.save(attributesToSave);
     return this.productsRepository.save(product);
   }
