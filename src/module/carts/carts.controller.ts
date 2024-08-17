@@ -9,16 +9,16 @@ import { Cart } from './models/cart.entity';
 @ApiTags('carts')
 @Controller('carts')
 export class CartsController {
-  constructor(private cartsService: CartsService) {}
+  constructor(private readonly cartsService: CartsService) {}
 
   @Get('my')
   @ApiOkResponse({ type: Cart, description: 'Current user/session cart' })
   async getCart(
     @ReqUser() user: User | null,
     @Session() session: Record<string, any>,
-  ) {
+  ): Promise<Cart> {
     session.cart = true;
-    return await this.cartsService.getCart(user, session.id);
+    return this.cartsService.getCart(user, session.id);
   }
 
   @Put('my')
@@ -27,8 +27,8 @@ export class CartsController {
     @ReqUser() user: User | null,
     @Session() session: Record<string, any>,
     @Body() body: CartDto,
-  ) {
+  ): Promise<Cart> {
     session.cart = true;
-    return await this.cartsService.updateCart(body, user, session.id);
+    return this.cartsService.updateCart(body, user, session.id);
   }
 }
