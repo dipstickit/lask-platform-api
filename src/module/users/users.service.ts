@@ -1,199 +1,87 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { genSalt, hash } from 'bcrypt';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { IsNull, Not, Repository } from 'typeorm';
-import {
-  CONFLICT_EMAIL,
-  NOTFOUND_USER,
-  NOTFOUND_ROLE,
-} from 'src/utils/message';
-import { RoleService } from '../role/role.service';
-import { UserFilterDto } from './dto/filter-user.dto';
-export const hashPassword = async (password: string) => {
-  const salt = await genSalt(10);
-  const hashPW = await hash(password, salt);
-  return hashPW;
-};
+import { Repository } from 'typeorm';
+import { User } from './models/user.entity';
+import { UserUpdateDto } from './dto/user-update.dto';
+import { NotFoundError } from '../errors/not-found.error';
+import { ConflictError } from '../errors/conflict.error';
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    private readonly roleService: RoleService,
-  ) { }
+  ) {}
 
-  async create(createUserDto: CreateUserDto) {
-    const { email, roleId, password } = createUserDto;
-
-    const userExist = await this.usersRepository.findOneBy({ email });
-    if (userExist) {
-      throw new BadRequestException(CONFLICT_EMAIL);
+  async addUser(
+    email: string,
+    hashedPassword: string,
+    firstName?: string,
+    lastName?: string,
+  ): Promise<User> {
+    try {
+      const user = new User();
+      user.email = email;
+      user.password = hashedPassword;
+      user.firstName = firstName;
+      user.lastName = lastName;
+      const savedUser = await this.usersRepository.save(user);
+      const { password, ...toReturn } = savedUser;
+      return toReturn as User;
+    } catch (error) {
+      throw new ConflictError('user', 'email', email);
     }
+  }
 
-    const role = await this.roleService.findOneById(roleId);
-    if (!role) {
-      throw new BadRequestException(NOTFOUND_ROLE);
-    }
-
-    const hashPW = await hashPassword(password);
-
-    const newUser = this.usersRepository.create({
-      ...createUserDto,
-      password: hashPW,
-      role,
+  async findUserByEmail(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { email },
     });
-
-    const result = await this.usersRepository.save(newUser);
-
-    return result;
   }
 
-  async findAll(queryObj: UserFilterDto = {}) {
-    const {
-      firstName,
-      email,
-      phone,
-      roleId,
-      isActive,
-      sortBy,
-      sortDescending,
-      pageSize,
-      current,
-    } = queryObj;
-
-    const defaultLimit = pageSize ? pageSize : 10;
-    const defaultPage = current ? current : 1;
-    const offset = (defaultPage - 1) * defaultLimit;
-
-    const query = this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.role', 'role');
-
-    // Apply filters
-    if (firstName) {
-      query.andWhere('user.firstName ILike :firstName', {
-        firstName: `%${firstName}%`,
-      });
-    }
-    if (email) {
-      query.andWhere('user.email ILike :email', { email: `%${email}%` });
-    }
-    if (phone) {
-      query.andWhere('user.phone ILike :phone', { phone: `%${phone}%` });
-    }
-    if (typeof isActive === 'boolean') {
-      query.andWhere('user.isActive = :isActive', { isActive });
-    }
-    if (roleId) {
-      query.andWhere('role.id = :roleId', { roleId });
-    }
-
-    // Sorting logic
-    const sortableCriterias = ['firstName', 'email', 'dob'];
-    if (sortableCriterias.includes(sortBy)) {
-      query.orderBy(`user.${sortBy}`, sortDescending ? 'DESC' : 'ASC');
-    }
-
-    const [result, totalItems] = await query
-      .skip(offset)
-      .take(defaultLimit)
-      .getManyAndCount();
-
-    const totalPages = Math.ceil(totalItems / defaultLimit);
-
-    const data = result.map((user) => ({
-      ...user,
-      role: user.role.roleName,
-    }));
-
-    return {
-      currentPage: defaultPage,
-      totalPages,
-      pageSize: defaultLimit,
-      totalItems,
-      items: data,
-    };
+  async findUserToLogin(email: string): Promise<User | null> {
+    return await this.usersRepository.findOne({
+      where: { email },
+      select: { password: true, email: true, id: true, role: true },
+    });
   }
 
-  async findOneById(id: number) {
-    const user = await this.usersRepository.findOne({
+  async findUserToSession(id: number): Promise<User | null> {
+    return await this.usersRepository.findOne({
       where: { id },
-      relations: ['role'],
+      select: { email: true, id: true, role: true },
     });
-    if (!user) {
-      throw new BadRequestException(NOTFOUND_USER);
-    }
-    return {
-      ...user,
-      role: user.role.roleName,
-    };
   }
 
-  async findOneByToken(refreshToken: string) {
-    return this.usersRepository.findOneBy({ refreshToken });
+  async getUsers(): Promise<User[]> {
+    return await this.usersRepository.find();
   }
 
-  async findOneByEmail(email: string) {
-    const user = await this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.role', 'role')
-      .where('user.email = :email', { email })
-      .addSelect('user.password')
-      .getOne();
-
+  async getUser(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new BadRequestException(NOTFOUND_USER);
+      throw new NotFoundError('user', 'id', id.toString());
     }
-
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const { email, password, roleId, ...rest } = updateUserDto;
-    let hashPW = '';
-
-    const user = await this.usersRepository.findOneBy({ email });
-    if (user && user.id !== id) throw new BadRequestException(CONFLICT_EMAIL);
-
-    const role = await this.roleService.findOneById(roleId);
-    if (!role) throw new BadRequestException(NOTFOUND_ROLE);
-    if (password) {
-      hashPW = await hashPassword(password);
+  async updateUser(id: number, update: UserUpdateDto): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundError('user', 'id', id.toString());
     }
-
-    const existUser = await this.usersRepository.existsBy({ id });
-    if (!existUser) throw new BadRequestException(NOTFOUND_USER);
-
-    return this.usersRepository.update(id, {
-      email,
-      role,
-      password: hashPW,
-      ...rest,
-    });
+    Object.assign(user, update);
+    await this.usersRepository.save(user);
+    return user;
   }
 
-  async remove(id: number) {
-    const existUser = await this.usersRepository.findOne({ where: { id } });
-    if (!existUser) throw new BadRequestException(NOTFOUND_USER);
-
-    existUser.isActive = false;
-    existUser.deletedAt = new Date();
-    await this.usersRepository.save(existUser);
-    return existUser;
-  }
-
-  async restore(id: number) {
-    const existUser = await this.usersRepository.findOne({
-      where: { id, deletedAt: Not(IsNull()) },
-      withDeleted: true, // Thêm điều kiện này
+  async deleteUser(id: number): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
     });
-    if (!existUser) throw new BadRequestException(NOTFOUND_USER);
-
-    existUser.isActive = true;
-    existUser.deletedAt = null; // Reset thời gian xóa
-    await this.usersRepository.save(existUser);
-    return existUser;
+    if (!user) {
+      throw new NotFoundError('user', 'id', id.toString());
+    }
+    await this.usersRepository.delete({ id });
+    return true;
   }
 }

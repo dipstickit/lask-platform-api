@@ -1,4 +1,4 @@
-import { User } from 'src/module/users/entities/user.entity';
+import { User } from 'src/module/users/models/user.entity';
 import {
   Entity,
   Column,
@@ -10,7 +10,6 @@ import {
 
 @Entity()
 export class Role {
-
   @PrimaryGeneratedColumn()
   id: number;
 

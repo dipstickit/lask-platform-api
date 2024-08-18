@@ -1,221 +1,147 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
-import { CategoryGroup } from './entities/category-group.entity';
-import { CategoryFilterDto } from './dto/filter-category.dto';
-import { CreateCategoryGroupDto } from './dto/create-category-group.dto';
+import { Category } from './models/category.entity';
+import { Product } from '../products/models/product.entity';
+import { CategoryCreateDto } from './dto/category-create.dto';
+import { CategoryUpdateDto } from './dto/category-update.dto';
+import { NotFoundError } from '../../errors/not-found.error';
+import { NotRelatedError } from '../../errors/not-related.error';
+import { CategoryGroup } from './models/category-group.entity';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
+    private readonly categoriesRepository: Repository<Category>,
     @InjectRepository(CategoryGroup)
-    private categoryGroupRepository: Repository<CategoryGroup>,
-  ) { }
+    private readonly categoryGroupsRepository: Repository<CategoryGroup>,
+    private readonly productsService: ProductsService,
+  ) {}
 
-  async findOneCategoryById(
+  async getCategories(withProducts = false): Promise<Category[]> {
+    return this.categoriesRepository.find({
+      relations: ['parentCategory', ...(withProducts ? ['products'] : [])],
+    });
+  }
+
+  async getCategory(
     id: number,
     children = true,
     products = false,
   ): Promise<Category> {
-    const category = await this.categoryRepository.findOne({
+    const category = await this.categoriesRepository.findOne({
       where: { id },
       relations: [
-        // Always include a relationship to the parent category
         'parentCategory',
-        // Include child categories if 'children' is true
         ...(children ? ['childCategories'] : []),
-        // Include products and product attributes if 'products' is true
         ...(products
           ? ['products', 'products.attributes', 'products.attributes.type']
           : []),
       ],
     });
+
     if (!category) {
-      throw new BadRequestException('Category with id ${id} not found');
+      throw new NotFoundError('category', 'id', id.toString());
     }
+
     return category;
+  }
+
+  async getCategoryGroups(): Promise<CategoryGroup[]> {
+    return this.categoryGroupsRepository.find({ relations: ['categories'] });
+  }
+
+  async createCategory(categoryData: CategoryCreateDto): Promise<Category> {
+    const category = this.categoriesRepository.create(categoryData);
+
+    if (categoryData.parentCategoryId) {
+      await this.updateParentCategory(category, categoryData.parentCategoryId);
+    }
+
+    return this.categoriesRepository.save(category);
+  }
+
+  async updateCategory(
+    id: number,
+    categoryData: CategoryUpdateDto,
+  ): Promise<Category> {
+    const category = await this.getCategory(id, false);
+
+    Object.assign(category, categoryData);
+
+    if (categoryData.parentCategoryId) {
+      await this.updateParentCategory(category, categoryData.parentCategoryId);
+    }
+
+    if (categoryData.groups) {
+      category.groups = await this.getOrCreateCategoryGroups(
+        categoryData.groups,
+      );
+    }
+
+    return this.categoriesRepository.save(category);
   }
 
   private async updateParentCategory(
     category: Category,
     parentCategoryId: number,
-  ): Promise<boolean> {
-    // Check if the parentCategoryId is different from the current one to avoid unnecessary database call
-    if (category.parentCategory?.id !== parentCategoryId) {
-      const parentCategory = await this.findOneCategoryById(
-        parentCategoryId,
-        false,
-      );
+  ): Promise<void> {
+    category.parentCategory = await this.getCategory(parentCategoryId, false);
+  }
 
-      // Ensure the parent category was fetched successfully
-      if (!parentCategory) {
-        throw new Error(
-          `Parent category with ID ${parentCategoryId} not found`,
-        );
+  private async getOrCreateCategoryGroups(
+    groupDataList: { name: string }[],
+  ): Promise<CategoryGroup[]> {
+    const groups = [];
+    for (const groupData of groupDataList) {
+      let group = await this.categoryGroupsRepository.findOne({
+        where: { name: groupData.name },
+      });
+      if (!group) {
+        group = this.categoryGroupsRepository.create({ name: groupData.name });
+        group = await this.categoryGroupsRepository.save(group);
       }
-
-      category.parentCategory = parentCategory;
+      groups.push(group);
     }
-    return true;
+    return groups;
   }
 
-  async create(createCategoryDto: CreateCategoryDto) {
-    const existingName = await this.categoryRepository.findOneBy({
-      name: createCategoryDto.name,
-    });
-    if (existingName) throw new BadRequestException('Name already exists');
-    const existingSlug = await this.categoryRepository.findOneBy({
-      slug: createCategoryDto.slug,
-    });
-    if (existingSlug) throw new BadRequestException('Slug already exists');
-    const category = new Category();
-    Object.assign(category, createCategoryDto);
-    // Update the parent category if there is a parent Category Id
-    if (createCategoryDto.parentCategoryId) {
-      await this.updateParentCategory(
-        category,
-        createCategoryDto.parentCategoryId,
-      );
-    }
-    return this.categoryRepository.save(category);
+  async deleteCategory(id: number): Promise<void> {
+    await this.getCategory(id, false);
+    await this.categoriesRepository.delete(id);
   }
 
-  async updateCategoryById(
+  async getCategoryProducts(
     id: number,
-    categoryData: UpdateCategoryDto,
-  ): Promise<Category> {
-    const category = await this.findOneCategoryById(id, false);
-    // Destructure categoryData for easier access
-    const { parentCategoryId, groups, ...rest } = categoryData;
-    Object.assign(category, rest);
-    if (parentCategoryId) {
-      await this.updateParentCategory(category, parentCategoryId);
-    }
-    if (groups) {
-      // Use Promise.all to handle multiple async operations in parallel
-      const updatedGroups = await Promise.all(
-        groups.map(async (groupData) => {
-          let group = await this.categoryGroupRepository.findOne({
-            where: { name: groupData.name },
-          });
-          if (!group) {
-            group = new CategoryGroup();
-            group.name = groupData.name;
-            group = await this.categoryGroupRepository.save(group);
-          }
-          return group;
-        }),
-      );
-      category.groups = updatedGroups;
-    }
-
-    return this.categoryRepository.save(category);
+    withHidden = false,
+  ): Promise<Product[]> {
+    const category = await this.getCategory(id, false, true);
+    return category.products.filter((product) => withHidden || product.visible);
   }
 
-  async remove(id: number): Promise<void> {
-    const existCategory = await this.categoryRepository.findOne({
-      where: { id },
-    });
-    if (!existCategory) {
-      throw new BadRequestException('Category not found');
+  async addCategoryProduct(id: number, productId: number): Promise<Product> {
+    const product = await this.productsService.getProduct(productId, true);
+    const category = await this.getCategory(id, false, true);
+
+    if (!category.products.some((p) => p.id === productId)) {
+      category.products.push(product);
+      await this.categoriesRepository.save(category);
     }
-    await this.categoryRepository.delete({ id });
+
+    return product;
   }
 
-  async findAllcategory(queryObj: CategoryFilterDto = {}) {
-    const {
-      name,
-      description,
-      slug,
-      parentCategoryId,
-      sortBy,
-      sortDescending,
-      pageSize,
-      current,
-    } = queryObj;
+  async deleteCategoryProduct(id: number, productId: number): Promise<void> {
+    const product = await this.productsService.getProduct(productId, true);
+    const category = await this.getCategory(id, false, true);
 
-    const defaultLimit = pageSize ? pageSize : 10;
-    const defaultPage = current ? current : 1;
-    const offset = (defaultPage - 1) * defaultLimit;
-
-    const query = this.categoryRepository.createQueryBuilder('category');
-
-    // Apply filters
-    if (name) {
-      query.andWhere('category.name ILike :name', {
-        name: `%${name}%`,
-      });
-    }
-    if (description) {
-      query.andWhere('category.description ILike :description', {
-        description: `%${description}%`,
-      });
-    }
-    if (slug) {
-      query.andWhere('category.slug ILike :slug', { slug: `%${slug}%` });
-    }
-    if (parentCategoryId) {
-      query.andWhere('category.parentCategoryId = :parentCategoryId', {
-        parentCategoryId,
-      });
-    }
-    const sortableCriterias = ['name', 'description', 'slug'];
-    if (sortableCriterias.includes(sortBy)) {
-      query.orderBy(`category.${sortBy}`, sortDescending ? 'DESC' : 'ASC');
+    if (!category.products.some((p) => p.id === productId)) {
+      throw new NotRelatedError('category', 'product');
     }
 
-    const [result, totalItems] = await query
-      .skip(offset)
-      .take(defaultLimit)
-      .getManyAndCount();
-
-    const totalPages = Math.ceil(totalItems / defaultLimit);
-
-    return {
-      currentPage: defaultPage,
-      totalPages,
-      pageSize: defaultLimit,
-      totalItems,
-      items: result,
-    };
-  }
-
-  async createCategoryGroup(createCategoryGroupDto: CreateCategoryGroupDto) {
-    const existingName = await this.categoryRepository.findOneBy({
-      name: createCategoryGroupDto.name,
-    });
-    if (existingName) throw new BadRequestException('Name already exists');
-    const categoryGroup = this.categoryGroupRepository.create(
-      createCategoryGroupDto,
-    );
-    return this.categoryGroupRepository.save(categoryGroup);
-  }
-
-  async findAllCategoryGroups() {
-    try {
-      return this.categoryGroupRepository.find({
-        order: {
-          id: 'ASC',
-        },
-        relations: ['categories'],
-      });
-    } catch (error) {
-      throw new BadRequestException('Failed to load category groups');
-    }
-  }
-
-  async findOneCategoryGroupById(id: number) {
-    const existcategoryGroup = await this.categoryGroupRepository.findOne({
-      where: { id },
-    });
-    if (!existcategoryGroup)
-      throw new BadRequestException('Category group not found');
-
-    return existcategoryGroup;
+    category.products = category.products.filter((p) => p.id !== productId);
+    await this.categoriesRepository.save(category);
   }
 }

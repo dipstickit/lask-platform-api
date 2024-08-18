@@ -1,34 +1,64 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { RegisterDto } from './dto/register.dto';
+import { User } from '../users/models/user.entity';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { SessionAuthGuard } from './guards/session-auth.guard';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  PickType,
+} from '@nestjs/swagger';
+import { LoginDto } from './dto/login.dto';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  @Post('register')
+  @ApiCreatedResponse({ type: User, description: 'Registered user' })
+  @ApiBadRequestResponse({ description: 'Invalid register data' })
+  @ApiConflictResponse({
+    description: 'User with given email already exists',
+  })
+  async register(@Body() registerDto: RegisterDto): Promise<User> {
+    return this.authService.register(registerDto);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  @ApiBody({ type: LoginDto })
+  @ApiCreatedResponse({
+    type: PickType(User, ['id', 'email', 'role']),
+    description: 'Logged in user',
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
+  async login(
+    @Req() req: Request & { user: User },
+  ): Promise<Pick<User, 'id' | 'email' | 'role'>> {
+    return req.user;
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @UseGuards(SessionAuthGuard)
+  @Post('logout')
+  @ApiCreatedResponse({ description: 'User logged out' })
+  @ApiUnauthorizedResponse({ description: 'User is not logged in' })
+  async logout(@Req() req: Request): Promise<void> {
+    return new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Failed to destroy session:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 }
