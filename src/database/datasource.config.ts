@@ -2,7 +2,6 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { join } from 'path';
 
-// for connecting to database
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => ({
     type: 'postgres',
@@ -17,6 +16,8 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     logging: true,
     synchronize: configService.get<boolean>('DB_SYNC'),
     seeds: [join(__dirname, '../database/seeds/index.ts}')],
+    keepConnectionAlive: true,
+    dropSchema: false,
   }),
   inject: [ConfigService],
 };
