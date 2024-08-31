@@ -23,9 +23,8 @@ import { RedisModule } from './module/redis/redis.module';
 import * as session from 'express-session';
 import * as passport from 'passport';
 import { RedisClientType } from 'redis';
-import * as connectRedis from 'connect-redis';
+import RedisStore from 'connect-redis';
 import { REDIS_CLIENT } from './module/redis/redis.constants';
-import { Client } from 'connect-redis';
 
 @Module({
   imports: [
@@ -59,19 +58,23 @@ export class AppModule {
     private readonly configService: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redisClient: RedisClientType,
   ) {}
+
   configure(consumer: MiddlewareConsumer) {
-    const RedisStore = connectRedis(session);
+    const redisStore = new RedisStore({
+      client: this.redisClient,
+    });
     consumer
       .apply(
         session({
-          store: new RedisStore({
-            client: this.redisClient as unknown as Client,
-          }),
-          secret: this.configService.get<string>('session.secret', ''),
+          store: redisStore,
+          secret: this.configService.get<string>(
+            'SESSION_SECRET',
+            'MY-SECRET-KEY',
+          ),
           resave: false,
           saveUninitialized: false,
           cookie: {
-            maxAge: this.configService.get<number>('session.maxAge'),
+            maxAge: this.configService.get<number>('SESSION_MAX_AGE', 86400000), // 24 hours
           },
         }),
         passport.initialize(),
