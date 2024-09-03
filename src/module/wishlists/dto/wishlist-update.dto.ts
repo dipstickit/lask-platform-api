@@ -1,11 +1,4 @@
-import { IsInt, IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { WishlistCreateDto } from './wishlist-create.dto';
 
-export class WishlistUpdateDto {
-  @IsString()
-  @IsOptional()
-  name?: string;
-
-  @IsInt({ each: true })
-  @IsOptional()
-  productIds?: number[];
-}
+export class WishlistUpdateDto extends PartialType(WishlistCreateDto) {}

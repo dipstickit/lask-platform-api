@@ -11,65 +11,40 @@ import { UsersService } from './users.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from './models/role.enum';
 import { User } from './models/user.entity';
-import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserUpdateDto } from './dto/user-update.dto';
 import { ReqUser } from '../auth/decorators/user.decorator';
-import {
-  ApiBadRequestResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
-@ApiTags('users')
+@ApiTags('Users')
 @Controller('users')
 @ApiUnauthorizedResponse({ description: 'User is not logged in' })
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  @UseGuards(SessionAuthGuard)
-  @ApiOkResponse({
-    type: User,
-    description: 'Currently logged in user',
-  })
+  @UseGuards(JwtAuthGuard)
   async getCurrentUser(@ReqUser() user: User): Promise<User> {
     return this.usersService.getUser(user.id);
   }
 
   @Get()
   @Roles(Role.Admin)
-  @ApiOkResponse({
-    type: [User],
-    description: 'List of all users',
-  })
-  @ApiForbiddenResponse({ description: 'User is not admin' })
+  @UseGuards(JwtAuthGuard)
   async getUsers(): Promise<User[]> {
     return this.usersService.getUsers();
   }
 
   @Get('/:id')
   @Roles(Role.Admin)
-  @ApiOkResponse({
-    type: User,
-    description: 'User with given id',
-  })
-  @ApiForbiddenResponse({ description: 'User is not admin' })
+  @UseGuards(JwtAuthGuard)
   async getUser(@Param('id') id: number): Promise<User> {
     return await this.usersService.getUser(id);
   }
 
   @Patch('/:id')
   @Roles(Role.Admin)
-  @ApiOkResponse({
-    type: User,
-    description: 'User successfully updated',
-  })
-  @ApiForbiddenResponse({ description: 'User is not admin' })
-  @ApiNotFoundResponse({ description: 'User not found' })
-  @ApiBadRequestResponse({ description: 'Invalid update data' })
+  @UseGuards(JwtAuthGuard)
   async updateUser(
     @Param('id') id: number,
     @Body() update: UserUpdateDto,
@@ -79,11 +54,7 @@ export class UsersController {
 
   @Delete('/:id')
   @Roles(Role.Admin)
-  @ApiOkResponse({
-    description: 'User successfully deleted',
-  })
-  @ApiForbiddenResponse({ description: 'User is not admin' })
-  @ApiNotFoundResponse({ description: 'User not found' })
+  @UseGuards(JwtAuthGuard)
   async deleteUser(@Param('id') id: number): Promise<void> {
     await this.usersService.deleteUser(id);
   }

@@ -17,13 +17,9 @@ import {
 import {
   ApiBody,
   ApiConsumes,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiProduces,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Roles } from '../../../auth/decorators/roles.decorator';
 import { Role } from '../../../users/models/role.enum';
@@ -33,7 +29,7 @@ import { ProductPhotosService } from './product-photos.service';
 import { fileBodySchema } from '../../../local-files/models/file-body.schema';
 import { fileResponseSchema } from '../../../local-files/models/file-response.schema';
 
-@ApiTags('products')
+@ApiTags('Products')
 @Controller('products/:id')
 export class ProductPhotosController {
   constructor(private productPhotosService: ProductPhotosService) {}
@@ -44,7 +40,6 @@ export class ProductPhotosController {
     description: 'Product photo with given id',
   })
   @ApiProduces('image/*')
-  @ApiNotFoundResponse({ description: 'Product photo not found' })
   async getProductPhoto(
     @Param('id', ParseIntPipe) id: number,
     @Param('photoId', ParseIntPipe) photoId: number,
@@ -61,10 +56,6 @@ export class ProductPhotosController {
 
   @Post('photos')
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Product not found' })
-  @ApiCreatedResponse({ type: Product, description: 'Product photo added' })
   @ApiBody({ schema: fileBodySchema })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
@@ -85,10 +76,6 @@ export class ProductPhotosController {
 
   @Delete('photos/:photoId')
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Product not found' })
-  @ApiOkResponse({ type: Product, description: 'Product photo deleted' })
   async deleteProductPhoto(
     @Param('id', ParseIntPipe) id: number,
     @Param('photoId', ParseIntPipe) photoId: number,

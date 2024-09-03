@@ -37,7 +37,7 @@ import { fileBodySchema } from '../../../local-files/models/file-body.schema';
 import { MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { Response as ExpressResponse } from 'express';
 
-@ApiTags('product ratings')
+@ApiTags('Product ratings')
 @Features('Product ratings', 'Product rating photos')
 @Controller('products/:productId/ratings/:id/photos')
 export class ProductRatingPhotosController {

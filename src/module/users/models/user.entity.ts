@@ -4,6 +4,7 @@ import {
   Entity,
   Index,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.enum';
 import { Exclude } from 'class-transformer';
@@ -13,9 +14,6 @@ import { ApiHideProperty } from '@nestjs/swagger';
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @CreateDateColumn()
-  registered: Date;
 
   @Column({ nullable: true })
   firstName?: string;
@@ -32,10 +30,27 @@ export class User {
   @Column({ select: false })
   password: string;
 
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ default: true })
+  isActive: boolean;
+
   @Column({
     type: 'enum',
     enum: Role,
     default: Role.Customer,
   })
   role: Role;
+
+  refreshToken: string;
+
+  @CreateDateColumn({ select: false })
+  createdAt: Date;
+
+  @UpdateDateColumn({ select: false })
+  updatedAt: Date;
 }

@@ -15,64 +15,39 @@ import { CategoryCreateDto } from './dto/category-create.dto';
 import { CategoryUpdateDto } from './dto/category-update.dto';
 import { Product } from '../products/models/product.entity';
 import { Category } from './models/category.entity';
-import {
-  ApiBadRequestResponse,
-  ApiBody,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoryGroup } from './models/category-group.entity';
 import { User } from '../../users/models/user.entity';
 import { ReqUser } from '../../auth/decorators/user.decorator';
 
-@ApiTags('categories')
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
   @Get()
-  @ApiOkResponse({ type: [Category], description: 'List of all categories' })
   async getCategories(): Promise<Category[]> {
     return this.categoriesService.getCategories();
   }
 
   @Get('/groups')
-  @ApiOkResponse({
-    type: [CategoryGroup],
-    description: 'List of all category groups',
-  })
   async getCategoryGroups(): Promise<CategoryGroup[]> {
     return await this.categoriesService.getCategoryGroups();
   }
 
   @Get('/:id')
-  @ApiNotFoundResponse({ description: 'Category not found' })
-  @ApiOkResponse({ type: Category, description: 'Category with given id' })
   async getCategory(@Param('id', ParseIntPipe) id: number): Promise<Category> {
     return await this.categoriesService.getCategory(id);
   }
 
   @Post()
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiCreatedResponse({ type: Category, description: 'Category created' })
-  @ApiBadRequestResponse({ description: 'Invalid category data' })
   async createCategory(@Body() category: CategoryCreateDto): Promise<Category> {
     return await this.categoriesService.createCategory(category);
   }
 
   @Patch('/:id')
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiBadRequestResponse({ description: 'Invalid category data' })
-  @ApiOkResponse({ type: Category, description: 'Category updated' })
-  @ApiNotFoundResponse({ description: 'Category not found' })
   async updateCategory(
     @Param('id', ParseIntPipe) id: number,
     @Body() category: CategoryUpdateDto,
@@ -82,17 +57,11 @@ export class CategoriesController {
 
   @Delete('/:id')
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiOkResponse({ type: Category, description: 'Category deleted' })
-  @ApiNotFoundResponse({ description: 'Category not found' })
   async deleteCategory(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.categoriesService.deleteCategory(id);
   }
 
   @Get('/:id/products')
-  @ApiNotFoundResponse({ description: 'Category not found' })
-  @ApiOkResponse({ type: [Product], description: 'Category products' })
   async getCategoryProducts(
     @Param('id', ParseIntPipe) id: number,
     @ReqUser() user?: User,
@@ -105,13 +74,6 @@ export class CategoriesController {
 
   @Post('/:id/products')
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Category not found' })
-  @ApiCreatedResponse({
-    type: Product,
-    description: 'Product added to category',
-  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -130,10 +92,6 @@ export class CategoriesController {
 
   @Delete('/:id/products/:productId')
   @Roles(Role.Admin, Role.Manager)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Category not found' })
-  @ApiOkResponse({ description: 'Product deleted from category' })
   async deleteCategoryProduct(
     @Param('id', ParseIntPipe) id: number,
     @Param('productId', ParseIntPipe) productId: number,

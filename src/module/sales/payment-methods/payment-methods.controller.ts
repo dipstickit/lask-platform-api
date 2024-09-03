@@ -23,25 +23,18 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-@ApiTags('payment methods')
+@ApiTags('Payment methods')
 @Controller('payment-methods')
 export class PaymentMethodsController {
   constructor(private readonly paymentMethodsService: PaymentMethodsService) {}
 
   @Get()
-  @ApiOkResponse({
-    type: [PaymentMethod],
-    description: 'List all payment methods',
-  })
   async getPaymentMethods(): Promise<PaymentMethod[]> {
     return this.paymentMethodsService.getMethods();
   }
 
   @Post()
   @Roles(Role.Admin)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiBadRequestResponse({ description: 'Invalid payment method data' })
   @ApiCreatedResponse({
     type: PaymentMethod,
     description: 'Payment method created',
@@ -54,11 +47,6 @@ export class PaymentMethodsController {
 
   @Put(':id')
   @Roles(Role.Admin)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Payment method not found' })
-  @ApiBadRequestResponse({ description: 'Invalid payment method data' })
-  @ApiOkResponse({ type: PaymentMethod, description: 'Payment method updated' })
   async updatePaymentMethod(
     @Param('id', ParseIntPipe) id: number,
     @Body() methodData: PaymentMethodDto,
@@ -68,10 +56,6 @@ export class PaymentMethodsController {
 
   @Delete(':id')
   @Roles(Role.Admin)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Payment method not found' })
-  @ApiOkResponse({ description: 'Payment method deleted' })
   async deletePaymentMethod(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<void> {
