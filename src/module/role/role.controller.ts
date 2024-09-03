@@ -1,12 +1,25 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ResponseMessage } from 'src/decorator/customize';
-import { ROLE_CREATE_SUCCESS, ROLE_DELETE_SUCCESS, ROLE_LOAD_SUCCESS, ROLE_UPDATE_SUCCESS } from 'src/utils/message';
+import {
+  ROLE_CREATE_SUCCESS,
+  ROLE_DELETE_SUCCESS,
+  ROLE_LOAD_SUCCESS,
+  ROLE_UPDATE_SUCCESS,
+} from 'src/utils/message';
 import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags('roles')
+@ApiTags('Roles')
 @Controller('roles')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}

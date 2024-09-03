@@ -6,13 +6,12 @@ import { CartDto } from './dto/cart.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Cart } from './models/cart.entity';
 
-@ApiTags('carts')
+@ApiTags('Carts')
 @Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
   @Get('my')
-  @ApiOkResponse({ type: Cart, description: 'Current user/session cart' })
   async getCart(
     @ReqUser() user: User | null,
     @Session() session: Record<string, any>,
@@ -22,7 +21,6 @@ export class CartsController {
   }
 
   @Put('my')
-  @ApiOkResponse({ type: Cart, description: 'Updated cart' })
   async updateCart(
     @ReqUser() user: User | null,
     @Session() session: Record<string, any>,

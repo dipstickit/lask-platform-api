@@ -48,7 +48,7 @@ import { REDIS_CLIENT } from './module/redis/redis.constants';
     WishlistsModule,
     SalesModule,
     CartsModule,
-    RedisModule,
+    // RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -56,30 +56,11 @@ import { REDIS_CLIENT } from './module/redis/redis.constants';
 export class AppModule {
   constructor(
     private readonly configService: ConfigService,
-    @Inject(REDIS_CLIENT) private readonly redisClient: RedisClientType,
+    // @Inject(REDIS_CLIENT) private readonly redisClient: RedisClientType,
   ) {}
-
   configure(consumer: MiddlewareConsumer) {
-    const redisStore = new RedisStore({
-      client: this.redisClient,
-    });
-    consumer
-      .apply(
-        session({
-          store: redisStore,
-          secret: this.configService.get<string>(
-            'SESSION_SECRET',
-            'MY-SECRET-KEY',
-          ),
-          resave: false,
-          saveUninitialized: false,
-          cookie: {
-            maxAge: this.configService.get<number>('SESSION_MAX_AGE', 86400000), // 24 hours
-          },
-        }),
-        passport.initialize(),
-        passport.session(),
-      )
-      .forRoutes('*');
+    // const redisStore = new RedisStore({
+    //   client: this.redisClient,
+    // });
   }
 }

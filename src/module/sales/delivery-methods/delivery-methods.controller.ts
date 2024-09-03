@@ -12,17 +12,9 @@ import { DeliveryMethod } from './models/delivery-method.entity';
 import { DeliveryMethodDto } from './dto/delivery-method.dto';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../users/models/role.enum';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags('delivery methods')
+@ApiTags('Delivery methods')
 @Controller('delivery-methods')
 export class DeliveryMethodsController {
   constructor(
@@ -30,23 +22,12 @@ export class DeliveryMethodsController {
   ) {}
 
   @Get()
-  @ApiOkResponse({
-    type: [DeliveryMethod],
-    description: 'List all delivery methods',
-  })
   async getDeliveryMethods(): Promise<DeliveryMethod[]> {
     return this.deliveryMethodsService.getMethods();
   }
 
   @Post()
   @Roles(Role.Admin)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiBadRequestResponse({ description: 'Invalid delivery method data' })
-  @ApiCreatedResponse({
-    type: DeliveryMethod,
-    description: 'Delivery method created',
-  })
   async createDeliveryMethod(
     @Body() body: DeliveryMethodDto,
   ): Promise<DeliveryMethod> {
@@ -55,14 +36,6 @@ export class DeliveryMethodsController {
 
   @Put(':id')
   @Roles(Role.Admin)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Delivery method not found' })
-  @ApiBadRequestResponse({ description: 'Invalid delivery method data' })
-  @ApiOkResponse({
-    type: DeliveryMethod,
-    description: 'Delivery method updated',
-  })
   async updateDeliveryMethod(
     @Param('id') id: number,
     @Body() body: DeliveryMethodDto,
@@ -72,10 +45,6 @@ export class DeliveryMethodsController {
 
   @Delete(':id')
   @Roles(Role.Admin)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Delivery method not found' })
-  @ApiOkResponse({ description: 'Delivery method deleted' })
   async deleteDeliveryMethod(@Param('id') id: number): Promise<void> {
     await this.deliveryMethodsService.deleteMethod(id);
   }

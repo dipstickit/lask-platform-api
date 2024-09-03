@@ -1,20 +1,12 @@
 import { Body, Controller, Post, Res } from '@nestjs/common';
-import {
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiProduces,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { ExportService } from './export.service';
 import { Response } from 'express';
 import { ExportDto } from './dto/export.dto';
 import { fileResponseSchema } from '../local-files/models/file-response.schema';
 
-@ApiTags('import-export')
+@ApiTags('Import-export')
 @Controller('export')
-@ApiUnauthorizedResponse({ description: 'User is not logged in' })
-@ApiForbiddenResponse({ description: 'User is not admin' })
 export class ExportController {
   constructor(private exportService: ExportService) {}
 

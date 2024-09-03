@@ -1,32 +1,17 @@
-import {
-  IsNotEmpty,
-  IsNotEmptyObject,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
+import { PageCreateDto } from './page-create.dto';
 import { PageGroupDto } from './page-group.dto';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
-export class PageUpdateDto {
-  @IsString()
-  @IsNotEmpty()
+export class PageUpdateDto extends PartialType(PageCreateDto) {
+  @ApiProperty({
+    type: [PageGroupDto],
+    example: [{ name: 'Main Pages' }],
+    required: false,
+  })
   @IsOptional()
-  title?: string;
-
-  @IsString()
-  @IsOptional()
-  slug?: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  content?: string;
-
-  @IsOptional()
-  @IsNotEmpty({ each: true })
   @ValidateNested({ each: true })
-  @IsNotEmptyObject({ nullable: false }, { each: true })
   @Type(() => PageGroupDto)
   groups?: PageGroupDto[];
 }

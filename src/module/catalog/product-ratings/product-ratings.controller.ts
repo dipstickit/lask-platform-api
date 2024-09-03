@@ -27,18 +27,13 @@ import {
 } from '@nestjs/swagger';
 import { Features } from '../../settings/guards/features.decorator';
 
-@ApiTags('product ratings')
+@ApiTags('Product ratings')
 @Features('Product ratings')
 @Controller('products/:productId/ratings')
 export class ProductRatingsController {
   constructor(private readonly productRatingsService: ProductRatingsService) {}
 
   @Get('')
-  @ApiNotFoundResponse({ description: 'Product not found' })
-  @ApiOkResponse({
-    type: [ProductRating],
-    description: 'List or ratings for given product',
-  })
   async getProductRatings(
     @Param('productId', ParseIntPipe) productId: number,
   ): Promise<ProductRating[]> {
@@ -47,14 +42,6 @@ export class ProductRatingsController {
 
   @Post('')
   @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
-  @ApiNotFoundResponse({ description: 'Product not found' })
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiCreatedResponse({
-    type: ProductRating,
-    description: 'Product rating created',
-  })
-  @ApiBadRequestResponse({ description: 'Invalid rating data' })
   async createProductRating(
     @ReqUser() user: User,
     @Param('productId', ParseIntPipe) productId: number,
@@ -69,11 +56,6 @@ export class ProductRatingsController {
 
   @Put(':id')
   @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Product rating not found' })
-  @ApiOkResponse({ type: ProductRating, description: 'Product rating updated' })
-  @ApiBadRequestResponse({ description: 'Invalid rating data' })
   async updateProductRating(
     @ReqUser() user: User,
     @Param('productId', ParseIntPipe) productId: number,
@@ -96,10 +78,6 @@ export class ProductRatingsController {
 
   @Delete(':id')
   @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
-  @ApiUnauthorizedResponse({ description: 'User not logged in' })
-  @ApiForbiddenResponse({ description: 'User not authorized' })
-  @ApiNotFoundResponse({ description: 'Product rating not found' })
-  @ApiOkResponse({ description: 'Product rating deleted' })
   async deleteProductRating(
     @ReqUser() user: User,
     @Param('productId', ParseIntPipe) productId: number,

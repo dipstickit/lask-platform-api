@@ -16,20 +16,10 @@ import { ReqUser } from '../../auth/decorators/user.decorator';
 import { ReturnCreateDto } from './dto/return-create.dto';
 import { ReturnUpdateDto } from './dto/return-update.dto';
 import { Role } from '../../users/models/role.enum';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { OrdersService } from '../orders/orders.service';
 
-@ApiUnauthorizedResponse({ description: 'User not logged in' })
-@ApiForbiddenResponse({ description: 'User not authorized' })
-@ApiTags('returns')
+@ApiTags('Returns')
 @Controller('returns')
 export class ReturnsController {
   constructor(
@@ -39,15 +29,12 @@ export class ReturnsController {
 
   @Get()
   @Roles(Role.Admin, Role.Manager, Role.Sales)
-  @ApiOkResponse({ type: [Return], description: 'List all returns' })
   async getReturns(): Promise<Return[]> {
     return this.returnsService.getReturns();
   }
 
   @Get('/:id')
   @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
-  @ApiNotFoundResponse({ description: 'Return not found' })
-  @ApiOkResponse({ type: Return, description: 'Return with given id' })
   async getReturn(
     @ReqUser() user: User,
     @Param('id', ParseIntPipe) id: number,
@@ -60,8 +47,6 @@ export class ReturnsController {
   }
 
   @Post('')
-  @ApiBadRequestResponse({ description: 'Invalid return data' })
-  @ApiCreatedResponse({ type: Return, description: 'Return created' })
   @Roles(Role.Admin, Role.Manager, Role.Sales, Role.Customer)
   async createReturn(
     @ReqUser() user: User,
@@ -78,9 +63,6 @@ export class ReturnsController {
   }
 
   @Patch('/:id')
-  @ApiNotFoundResponse({ description: 'Return not found' })
-  @ApiBadRequestResponse({ description: 'Invalid return data' })
-  @ApiOkResponse({ type: Return, description: 'Return updated' })
   @Roles(Role.Admin, Role.Manager, Role.Sales)
   async updateReturn(
     @Param('id', ParseIntPipe) id: number,

@@ -23,10 +23,8 @@ import { ImportService } from './import.service';
 import { ImportDto } from './dto/import.dto';
 import { ImportStatus } from './models/import-status.interface';
 
-@ApiTags('import-export')
+@ApiTags('Import-export')
 @Controller('import')
-@ApiUnauthorizedResponse({ description: 'User is not logged in' })
-@ApiForbiddenResponse({ description: 'User is not admin' })
 export class ImportController {
   constructor(private readonly importService: ImportService) {}
 
