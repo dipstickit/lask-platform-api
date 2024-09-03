@@ -6,6 +6,8 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
+import { ResponseMessage } from 'src/decorator/customize';
+import { LOGIN_SUCCESS } from 'src/utils/message';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -19,6 +21,7 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @ResponseMessage(LOGIN_SUCCESS)
   @ApiBody({ type: LoginDto })
   async login(@Req() req: Request & { user: User }) {
     return this.authService.login(req.user);
