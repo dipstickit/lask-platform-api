@@ -69,6 +69,12 @@ export class Order {
   @Column()
   contactEmail: string;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  paidAmount: number;
+
+  @Column({ default: 'PENDING' })
+  paymentStatus: string;
+
   @Column()
   contactPhone: string;
 

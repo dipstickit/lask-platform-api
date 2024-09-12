@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Order } from './models/order.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +15,8 @@ import { OrderPayment } from './models/order-payment.entity';
 import { NotFoundError } from '../../errors/not-found.error';
 import { Role } from '../../users/models/role.enum';
 import { OrderItemDto } from './dto/order-item.dto';
-
+import { ConfigService } from '@nestjs/config';
+import { formatDate, sortObject } from '../../../utils/common';
 @Injectable()
 export class OrdersService {
   constructor(
@@ -24,6 +26,7 @@ export class OrdersService {
     private readonly productsService: ProductsService,
     private readonly deliveryMethodsService: DeliveryMethodsService,
     private readonly paymentMethodsService: PaymentMethodsService,
+    private readonly configService: ConfigService,
   ) {}
 
   async getOrders(withUser = false, withProducts = false): Promise<Order[]> {
@@ -159,5 +162,84 @@ export class OrdersService {
     await this.getOrder(id);
     await this.ordersRepository.delete({ id });
     return;
+  }
+
+  async createOrderWithVNPay(userId: number, orderData: OrderCreateDto) {
+    const order = await this.createOrder(userId, orderData);
+
+    const vnpUrl = this.createVNPayUrl(order);
+    return vnpUrl;
+  }
+  private createVNPayUrl(order: Order): string {
+    const tmnCode = this.configService.get<string>('VNP_TMN_CODE');
+    const secretKey = this.configService.get<string>('VNP_HASH_SECRET');
+    const vnpUrl = this.configService.get<string>('VNP_URL');
+    const returnUrl = this.configService.get<string>('VNP_RETURN_URL');
+
+    const date = new Date();
+    const createDate = formatDate(date);
+    const orderId = order.id.toString();
+    const amount = (
+      order.items.reduce((sum, item) => sum + item.price * item.quantity, 0) *
+      100
+    ).toString();
+    const locale = 'vn';
+    const currCode = 'VND';
+    const ipAddr = '127.0.0.1';
+
+    const params = {
+      vnp_Version: '2.1.0',
+      vnp_Command: 'pay',
+      vnp_TmnCode: tmnCode,
+      vnp_Amount: amount,
+      vnp_CurrCode: currCode,
+      vnp_TxnRef: orderId,
+      vnp_OrderInfo: `Thanh toan cho don hang ${orderId}`,
+      vnp_OrderType: 'billpayment',
+      vnp_Locale: locale,
+      vnp_ReturnUrl: returnUrl,
+      vnp_IpAddr: ipAddr,
+      vnp_CreateDate: createDate,
+    };
+
+    // Sắp xếp params theo alphabet
+    const sortedParams = sortObject(params);
+
+    // Tạo query string
+    const querystring = Object.keys(sortedParams)
+      .map(
+        (key) =>
+          encodeURIComponent(key) + '=' + encodeURIComponent(sortedParams[key]),
+      )
+      .join('&');
+
+    // Tạo signature
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(querystring, 'utf-8')).digest('hex');
+
+    const vnpUrlWithSignature = `${vnpUrl}?${querystring}&vnp_SecureHash=${signed}`;
+
+    return vnpUrlWithSignature;
+  }
+  async updateOrderPaymentStatus(
+    orderId: number,
+    isSuccess: boolean,
+    amount?: number,
+  ) {
+    const order = await this.ordersRepository.findOne({
+      where: { id: orderId },
+    });
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${orderId} not found`);
+    }
+
+    if (isSuccess) {
+      order.paymentStatus = 'PAID';
+      order.paidAmount = amount;
+    } else {
+      order.paymentStatus = 'FAILED';
+    }
+
+    await this.ordersRepository.save(order);
   }
 }

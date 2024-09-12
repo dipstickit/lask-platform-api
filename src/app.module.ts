@@ -28,6 +28,7 @@ import { REDIS_CLIENT } from './module/redis/redis.constants';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './module/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './module/auth/guards/roles.guard';
+import { VnpayModule } from './module/vnpay/vnpay.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { RolesGuard } from './module/auth/guards/roles.guard';
     WishlistsModule,
     SalesModule,
     CartsModule,
+    VnpayModule,
     // RedisModule,
   ],
   controllers: [AppController],
