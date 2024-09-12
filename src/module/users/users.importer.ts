@@ -19,12 +19,7 @@ export class UsersImporter implements Importer {
       if (found) {
         idMap[user.id] = found.id;
       } else {
-        const { id: newId } = await this.usersService.addUser(
-          user.email,
-          '',
-          user.firstName,
-          user.lastName,
-        );
+        const { id: newId } = await this.usersService.addUser(user);
         await this.usersService.updateUser(newId, { role: user.role });
         idMap[user.id] = newId;
       }

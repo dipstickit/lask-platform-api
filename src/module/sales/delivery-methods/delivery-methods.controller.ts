@@ -13,6 +13,7 @@ import { DeliveryMethodDto } from './dto/delivery-method.dto';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../users/models/role.enum';
 import { ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Delivery methods')
 @Controller('delivery-methods')
@@ -21,6 +22,7 @@ export class DeliveryMethodsController {
     private readonly deliveryMethodsService: DeliveryMethodsService,
   ) {}
 
+  @Public()
   @Get()
   async getDeliveryMethods(): Promise<DeliveryMethod[]> {
     return this.deliveryMethodsService.getMethods();

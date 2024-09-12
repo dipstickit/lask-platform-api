@@ -36,7 +36,6 @@ async function bootstrap() {
     .setTitle('Lask Platform API')
     .setDescription('API documentation for the Lask Platform')
     .setVersion('1.0')
-    .addTag('Auth')
     .addBearerAuth()
     .addSecurityRequirements('bearer')
     .build();

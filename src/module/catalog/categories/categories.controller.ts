@@ -19,22 +19,26 @@ import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoryGroup } from './models/category-group.entity';
 import { User } from '../../users/models/user.entity';
 import { ReqUser } from '../../auth/decorators/user.decorator';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
+  @Public()
   @Get()
   async getCategories(): Promise<Category[]> {
     return this.categoriesService.getCategories();
   }
 
+  @Public()
   @Get('/groups')
   async getCategoryGroups(): Promise<CategoryGroup[]> {
     return await this.categoriesService.getCategoryGroups();
   }
 
+  @Public()
   @Get('/:id')
   async getCategory(@Param('id', ParseIntPipe) id: number): Promise<Category> {
     return await this.categoriesService.getCategory(id);
@@ -61,6 +65,7 @@ export class CategoriesController {
     await this.categoriesService.deleteCategory(id);
   }
 
+  @Public()
   @Get('/:id/products')
   async getCategoryProducts(
     @Param('id', ParseIntPipe) id: number,

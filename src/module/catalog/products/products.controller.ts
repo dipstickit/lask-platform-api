@@ -18,12 +18,14 @@ import { AttributeDto } from './dto/attribute.dto';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { ReqUser } from '../../auth/decorators/user.decorator';
 import { User } from '../../users/models/user.entity';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Public()
   @Get()
   async getProducts(@ReqUser() user?: User): Promise<Product[]> {
     const isAdminOrManagerOrSales =
@@ -31,6 +33,7 @@ export class ProductsController {
     return this.productsService.getProducts(isAdminOrManagerOrSales);
   }
 
+  @Public()
   @Get('/:id')
   async getProduct(
     @Param('id', ParseIntPipe) id: number,

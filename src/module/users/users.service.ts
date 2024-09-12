@@ -1,34 +1,23 @@
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './models/user.entity';
 import { UserUpdateDto } from './dto/user-update.dto';
 import { NotFoundError } from '../errors/not-found.error';
 import { ConflictError } from '../errors/conflict.error';
-
-@Injectable()
+import { IUser } from './interface/user';
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
   ) {}
 
-  async addUser(
-    email: string,
-    hashedPassword: string,
-    firstName?: string,
-    lastName?: string,
-  ): Promise<User> {
+  async addUser(createUserInput: Partial<IUser>): Promise<User> {
     try {
-      const user = new User();
-      user.email = email;
-      user.password = hashedPassword;
-      user.firstName = firstName;
-      user.lastName = lastName;
+      const user = this.usersRepository.create(createUserInput);
       const savedUser = await this.usersRepository.save(user);
       const { password, ...toReturn } = savedUser;
       return toReturn as User;
     } catch (error) {
-      throw new ConflictError('user', 'email', email);
+      throw new ConflictError('user', 'email', createUserInput.email!);
     }
   }
 
@@ -41,7 +30,13 @@ export class UsersService {
   async findUserToLogin(email: string): Promise<User | null> {
     return await this.usersRepository.findOne({
       where: { email },
-      select: { password: true, email: true, id: true, role: true },
+      select: {
+        password: true,
+        email: true,
+        id: true,
+        role: true,
+        firstName: true,
+      },
     });
   }
 
@@ -83,5 +78,17 @@ export class UsersService {
     }
     await this.usersRepository.delete({ id });
     return true;
+  }
+
+  async findOneByToken(refreshToken: string): Promise<User | null> {
+    const user = await this.usersRepository.findOne({
+      where: { refreshToken },
+    });
+
+    return user || null;
+  }
+
+  async saveRefreshToken(userId: number, refreshToken: string): Promise<void> {
+    await this.usersRepository.update(userId, { refreshToken });
   }
 }

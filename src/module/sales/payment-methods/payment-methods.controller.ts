@@ -13,21 +13,15 @@ import { PaymentMethod } from './models/payment-method.entity';
 import { PaymentMethodDto } from './dto/payment-method.dto';
 import { Role } from '../../users/models/role.enum';
 import { Roles } from '../../auth/decorators/roles.decorator';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Payment methods')
 @Controller('payment-methods')
 export class PaymentMethodsController {
   constructor(private readonly paymentMethodsService: PaymentMethodsService) {}
 
+  @Public()
   @Get()
   async getPaymentMethods(): Promise<PaymentMethod[]> {
     return this.paymentMethodsService.getMethods();

@@ -28,12 +28,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductPhotosService } from './product-photos.service';
 import { fileBodySchema } from '../../../local-files/models/file-body.schema';
 import { fileResponseSchema } from '../../../local-files/models/file-response.schema';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Products')
 @Controller('products/:id')
 export class ProductPhotosController {
   constructor(private productPhotosService: ProductPhotosService) {}
 
+  @Public()
   @Get('photos/:photoId')
   @ApiOkResponse({
     schema: fileResponseSchema,

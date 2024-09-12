@@ -27,4 +27,14 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   lastName?: string;
+
+  @ApiProperty({ example: '+841234567890', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty({ example: '123 Main St, Anytown, USA', required: false })
+  @IsOptional()
+  @IsString()
+  address?: string;
 }

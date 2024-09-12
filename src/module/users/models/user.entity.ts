@@ -46,6 +46,11 @@ export class User {
   })
   role: Role;
 
+  @Column({
+    length: 500,
+    select: false,
+    nullable: true,
+  })
   refreshToken: string;
 
   @CreateDateColumn({ select: false })
