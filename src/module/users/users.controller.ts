@@ -13,20 +13,13 @@ import { Role } from './models/role.enum';
 import { User } from './models/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserUpdateDto } from './dto/user-update.dto';
-import { ReqUser } from '../auth/decorators/user.decorator';
-import { ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('Users')
 @Controller('users')
-@ApiUnauthorizedResponse({ description: 'User is not logged in' })
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
-  async getCurrentUser(@ReqUser() user: User): Promise<User> {
-    return this.usersService.getUser(user.id);
-  }
 
   @Get()
   @Roles(Role.Admin)
@@ -36,7 +29,7 @@ export class UsersController {
   }
 
   @Get('/:id')
-  @Roles(Role.Admin)
+  @Roles(Role.Customer)
   @UseGuards(JwtAuthGuard)
   async getUser(@Param('id') id: number): Promise<User> {
     return await this.usersService.getUser(id);

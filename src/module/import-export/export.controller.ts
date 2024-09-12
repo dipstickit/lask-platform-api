@@ -4,12 +4,14 @@ import { ExportService } from './export.service';
 import { Response } from 'express';
 import { ExportDto } from './dto/export.dto';
 import { fileResponseSchema } from '../local-files/models/file-response.schema';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Import-export')
 @Controller('export')
 export class ExportController {
   constructor(private exportService: ExportService) {}
 
+  @Public()
   @Post('')
   @ApiCreatedResponse({
     schema: fileResponseSchema,

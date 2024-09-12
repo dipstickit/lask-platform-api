@@ -3,14 +3,16 @@ import { CartsService } from './carts.service';
 import { User } from '../users/models/user.entity';
 import { ReqUser } from '../auth/decorators/user.decorator';
 import { CartDto } from './dto/cart.dto';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Cart } from './models/cart.entity';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Carts')
 @Controller('carts')
 export class CartsController {
   constructor(private readonly cartsService: CartsService) {}
 
+  @Public()
   @Get('my')
   async getCart(
     @ReqUser() user: User | null,
@@ -20,6 +22,7 @@ export class CartsController {
     return this.cartsService.getCart(user, session.id);
   }
 
+  @Public()
   @Put('my')
   async updateCart(
     @ReqUser() user: User | null,

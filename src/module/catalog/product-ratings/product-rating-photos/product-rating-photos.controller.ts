@@ -36,6 +36,7 @@ import { fileResponseSchema } from '../../../local-files/models/file-response.sc
 import { fileBodySchema } from '../../../local-files/models/file-body.schema';
 import { MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { Response as ExpressResponse } from 'express';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Product ratings')
 @Features('Product ratings', 'Product rating photos')
@@ -45,6 +46,7 @@ export class ProductRatingPhotosController {
     private readonly productRatingPhotosService: ProductRatingPhotosService,
   ) {}
 
+  @Public()
   @Get(':photoId')
   @ApiOkResponse({
     schema: fileResponseSchema,

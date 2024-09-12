@@ -14,32 +14,26 @@ import { SettingCreateDto } from './dto/setting-create.dto';
 import { SettingUpdateDto } from './dto/setting-update.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/models/role.enum';
-import {
-  ApiBadRequestResponse,
-  ApiConflictResponse,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Settings')
 @Controller('settings')
 export class SettingsController {
   constructor(private settingsService: SettingsService) {}
 
+  @Public()
   @Get()
   async getSettings(): Promise<Setting[]> {
     return this.settingsService.getSettings();
   }
-
+  @Public()
   @Get('/:id(\\d+)')
   async getSetting(@Param('id', ParseIntPipe) id: number): Promise<Setting> {
     return this.settingsService.getSetting(id);
   }
 
+  @Public()
   @Get('/:name/value')
   async getSettingValueByName(@Param('name') name: string): Promise<string> {
     return this.settingsService.getSettingValueByName(name);

@@ -16,16 +16,9 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../users/models/role.enum';
 import { ReqUser } from '../../auth/decorators/user.decorator';
 import { User } from '../../users/models/user.entity';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Features } from '../../settings/guards/features.decorator';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Product ratings')
 @Features('Product ratings')
@@ -33,6 +26,7 @@ import { Features } from '../../settings/guards/features.decorator';
 export class ProductRatingsController {
   constructor(private readonly productRatingsService: ProductRatingsService) {}
 
+  @Public()
   @Get('')
   async getProductRatings(
     @Param('productId', ParseIntPipe) productId: number,

@@ -14,22 +14,26 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/models/role.enum';
 import { PageCreateDto } from './dto/page-create.dto';
 import { PageUpdateDto } from './dto/page-update.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Pages')
 @Controller('pages')
 export class PagesController {
   constructor(private pagesService: PagesService) {}
 
+  @Public()
   @Get()
   async getPages() {
     return await this.pagesService.getPages();
   }
 
+  @Public()
   @Get('groups')
   async getPageGroups() {
     return await this.pagesService.getPageGroups();
   }
 
+  @Public()
   @Get(':id')
   async getPage(@Param('id', ParseIntPipe) id: number) {
     return await this.pagesService.getPage(id);

@@ -1,4 +1,4 @@
-import { Inject, MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './module/auth/auth.module';
@@ -25,6 +25,9 @@ import * as passport from 'passport';
 import { RedisClientType } from 'redis';
 import RedisStore from 'connect-redis';
 import { REDIS_CLIENT } from './module/redis/redis.constants';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './module/auth/guards/jwt-auth.guard';
+import { RolesGuard } from './module/auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -51,7 +54,17 @@ import { REDIS_CLIENT } from './module/redis/redis.constants';
     // RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {
   constructor(

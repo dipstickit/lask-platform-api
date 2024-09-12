@@ -17,12 +17,14 @@ import { User } from '../../users/models/user.entity';
 import { OrderUpdateDto } from './dto/order-update.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Order } from './models/order.entity';
+import { Public } from 'src/module/auth/decorators/public.decorator';
 
 @ApiTags('Orders')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Public()
   @Post()
   async createOrder(
     @ReqUser() user: User | null,

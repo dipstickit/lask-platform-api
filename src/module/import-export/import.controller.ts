@@ -12,9 +12,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
-  ApiForbiddenResponse,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as multer from 'multer';
@@ -22,12 +20,14 @@ import * as multer from 'multer';
 import { ImportService } from './import.service';
 import { ImportDto } from './dto/import.dto';
 import { ImportStatus } from './models/import-status.interface';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Import-export')
 @Controller('import')
 export class ImportController {
   constructor(private readonly importService: ImportService) {}
 
+  @Public()
   @Post('')
   @ApiBody({
     schema: {
