@@ -9,4 +9,4 @@ import { VNPayService } from './vnpay.service';
   controllers: [VNPayController],
   providers: [VNPayService],
 })
-export class VNPayModule {}
+export class VnpayModule {}
