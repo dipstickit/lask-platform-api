@@ -67,10 +67,14 @@ export class OrdersController {
     return await this.ordersService.updateOrder(id, body);
   }
 
-  @Post('create-vnpay')
-  async createOrderWithVNPay(@Body() orderCreateDto: OrderCreateDto) {
+  @Public()
+  @Post('/create-vnpay')
+  async createOrderWithVNPay(
+    @ReqUser() user: User,
+    @Body() orderCreateDto: OrderCreateDto,
+  ) {
     const vnpUrl = await this.ordersService.createOrderWithVNPay(
-      1,
+      user.id,
       orderCreateDto,
     );
     return { vnpUrl };

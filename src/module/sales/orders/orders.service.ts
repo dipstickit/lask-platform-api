@@ -166,6 +166,9 @@ export class OrdersService {
     orderData: OrderCreateDto,
   ): Promise<string> {
     const order = await this.createOrder(userId, orderData);
+    if (!order) {
+      throw new NotFoundException('Order creation failed');
+    }
     return this.createVNPayUrl(order);
   }
 
