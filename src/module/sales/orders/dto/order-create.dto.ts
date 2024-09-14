@@ -6,6 +6,7 @@ import {
   ValidateNested,
   IsNotEmptyObject,
   IsOptional,
+  Matches,
 } from 'class-validator';
 import { OrderItemDto } from './order-item.dto';
 import { OrderDeliveryDto } from './order-delivery.dto';
@@ -33,10 +34,13 @@ export class OrderCreateDto {
   @IsNotEmpty()
   contactEmail: string;
 
-  @ApiProperty({ example: '+123456789' })
-  @IsPhoneNumber()
-  @IsNotEmpty()
-  contactPhone: string;
+  // @ApiProperty({ example: '+123456789' })
+  // @Matches(/^\d{10,11}$/, {
+  //   message: 'contactPhone must be a valid phone number',
+  // }) // Cho phép 10-11 số
+  // @IsPhoneNumber(null)
+  // @IsNotEmpty()
+  // contactPhone: string;
 
   @ApiProperty({
     example: 'Please leave the package at the front door',
