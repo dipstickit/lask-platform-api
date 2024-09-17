@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "migration:run": "npx typeorm migration:run -d dist/database/datasource.config.js",
+    "migration:create": "npx typeorm migration:create ./src/database/migrations/$npm_config_name",
+    "migration:revert": "npx typeorm migration:revert -d dist/database/datasource.config.js",
+    "migration:generate": "npx typeorm migration:generate ./src/database/migrations/$npm_config_name"
   },
   "dependencies": {
     "@nestjs/config": "^3.2.2",
@@ -47,6 +51,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "path-to-regexp": "^8.1.0",
     "pg": "^8.12.0",
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.0",
