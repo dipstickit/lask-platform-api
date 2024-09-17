@@ -15,7 +15,6 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     autoLoadEntities: true,
     logging: true,
     synchronize: configService.get<boolean>('POSTGRES_DB_SYNC'),
-    seeds: [join(__dirname, '../database/seeds/index.ts}')],
     keepConnectionAlive: true,
     dropSchema: false,
   }),

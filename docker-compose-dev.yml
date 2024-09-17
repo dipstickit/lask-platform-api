@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "3128:3128"
     environment:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
