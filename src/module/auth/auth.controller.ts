@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { User } from '../users/models/user.entity';
@@ -37,9 +44,16 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @ApiBody({ type: RefreshTokenDto })
-  async refreshToken(@Body('refresh_token') refreshToken: string) {
-    return this.authService.processNewToken(refreshToken);
+  async refreshToken(@Body() body: RefreshTokenDto) {
+    const { refresh_token } = body;
+
+    if (!refresh_token) {
+      throw new BadRequestException('Refresh token must be provided');
+    }
+
+    return this.authService.processNewToken(refresh_token);
   }
+
   @Public()
   @Post('profile')
   async getProfile(@Req() req: Request & { user: User }) {

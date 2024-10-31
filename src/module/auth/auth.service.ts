@@ -99,6 +99,8 @@ export class AuthService {
 
   async processNewToken(refreshToken: string) {
     try {
+      this.logger.log(`Received refresh token: ${refreshToken}`);
+
       if (!refreshToken) {
         throw new BadRequestException('Refresh token must be provided');
       }
