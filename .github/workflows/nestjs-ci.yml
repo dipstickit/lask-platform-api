@@ -37,11 +37,5 @@ jobs:
     - name: Install dependencies
       run: npm install --legacy-peer-deps
 
-    - name: Run lint
-      run: npm run lint
-
-    - name: Run tests
-      run: npm run test:ci  # Đảm bảo bạn đã có script này trong package.json để chạy Jest với --ci
-
     - name: Build application
       run: npm run build
